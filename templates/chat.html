@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Chat{% endblock %}
+{% block content %}
+<div class="container py-5 fade-in-up">
+  <div class="row justify-content-center">
+    <div class="col-lg-6">
+      <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
+        <div class="card-header bg-primary text-white p-4">
+          <div class="d-flex align-items-center">
+            <div class="bg-white bg-opacity-20 p-2 rounded-3 me-3">
+              <i class="fas fa-comments fs-4"></i>
+            </div>
+            <div>
+              <h5 class="mb-0 fw-black">Clinical Consultation</h5>
+              <p class="mb-0 small opacity-75">Secure message line for Record: {{ record.timestamp }}</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-body p-4 bg-light bg-opacity-50"
+          style="height: 450px; overflow-y: auto; display: flex; flex-direction: column-reverse;">
+          <div class="d-flex flex-column gap-3">
+            {% set all_messages = [] %}
+            {% if record.doctor_replies_list %}
+            {% for m in record.doctor_replies_list %}
+            {% set _ = all_messages.append({'from': 'doctor', 'message': m.message, 'time': m.time}) %}
+            {% endfor %}
+            {% endif %}
+            {% if record.patient_replies_list %}
+            {% for m in record.patient_replies_list %}
+            {% set _ = all_messages.append({'from': 'patient', 'message': m.message, 'time': m.time}) %}
+            {% endfor %}
+            {% endif %}
+
+            {% for m in all_messages | sort(attribute='time') %}
+            <div class="d-flex mt-2 {% if m.from == 'patient' %}justify-content-end{% endif %}">
+              <div class="max-width-80">
+                <div
+                  class="px-3 py-2 rounded-4 shadow-sm {% if m.from == 'patient' %}bg-primary text-white rounded-bottom-end-0{% else %}bg-white text-navy rounded-bottom-start-0{% endif %}">
+                  <div class="small fw-black mb-1 opacity-75">{% if m.from == 'patient' %}You{% else %}Doctor{% endif %}
+                  </div>
+                  <div>{{ m.message }}</div>
+                </div>
+                <div class="{% if m.from == 'patient' %}text-end{% endif %} mt-1">
+                  <small class="text-muted" style="font-size: 0.65rem;">{{ m.time }}</small>
+                </div>
+              </div>
+            </div>
+            {% else %}
+            <div class="text-center py-5 opacity-50">
+              <i class="fas fa-comment-slash fs-1 mb-3"></i>
+              <p>No messages exchanged yet.</p>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div class="card-footer bg-white p-3 border-top">
+          <form class="d-flex gap-2" method="post" action="{{ url_for('chat_reply') }}">
+            <input type="hidden" name="timestamp" value="{{ record.timestamp }}">
+            <input class="form-control rounded-pill border-0 bg-light px-4" type="text" name="message"
+              placeholder="Type your message..." required>
+            <button class="btn btn-primary rounded-circle shadow-sm d-flex align-items-center justify-content-center"
+              style="width: 45px; height: 45px;">
+              <i class="fas fa-paper-plane"></i>
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <div class="text-center mt-4">
+        <a href="{{ url_for('patient_dashboard') }}" class="text-muted text-decoration-none small fw-bold">
+          <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .max-width-80 {
+    max-width: 85%;
+  }
+
+  .rounded-bottom-end-0 {
+    border-bottom-right-radius: 0 !important;
+  }
+
+  .rounded-bottom-start-0 {
+    border-bottom-left-radius: 0 !important;
+  }
+</style>
+{% endblock %}

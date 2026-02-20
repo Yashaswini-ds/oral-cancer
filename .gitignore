@@ -1,0 +1,33 @@
+# Environment variables - NEVER push these (contains passwords!)
+.env
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Database (local only)
+instance/
+*.db
+*.sqlite3
+
+# Uploaded files & generated reports
+static/uploads/
+static/audio/
+static/report_*.pdf
+
+# Model (large file)
+oral_cancer_model.h5
+
+# Test/debug output
+out.txt
+test_output.txt
+test_email.py
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/

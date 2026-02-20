@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Patient Dashboard{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 fade-in-up">
+    <h2 class="fw-bold" style="color: var(--primary-color);">My Health Records</h2>
+    <a href="{{ url_for('start_screening') }}" class="btn btn-primary rounded-pill px-4 shadow-sm">
+        <i class="fas fa-plus me-2"></i>New Screening
+    </a>
+</div>
+
+{% if patient_records and patient_records|length %}
+<div class="row g-4 fade-in-up delay-200">
+    {% for r in patient_records %}
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden hover-scale transition-transform">
+            <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+                <span class="text-muted small"><i class="far fa-calendar-alt me-1"></i> {{ r.timestamp.split('_')[0] if
+                    r.timestamp else 'N/A' }}</span>
+                <span
+                    class="badge {% if r.prediction and 'Risk' in r.prediction and 'Low' not in r.prediction %}bg-danger{% else %}bg-success{% endif %} bg-opacity-10 text-{{ 'danger' if r.prediction and 'Risk' in r.prediction and 'Low' not in r.prediction else 'success' }} rounded-pill px-3">
+                    {{ r.prediction }}
+                </span>
+            </div>
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="rounded-3 overflow-hidden me-3 shadow-sm" style="width: 80px; height: 80px;">
+                        {% if r.image_path %}
+                        <img src="{{ url_for('static', filename='uploads/' + (r.image_path.split(',')[0] | basename)) }}"
+                            class="w-100 h-100 object-fit-cover">
+                        {% else %}
+                        <div class="w-100 h-100 bg-light d-flex align-items-center justify-content-center text-muted">
+                            <i class="fas fa-image fa-2x"></i>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <h6 class="mb-1 text-dark fw-bold">Confidence: {{ r.confidence }}%</h6>
+                        <p class="mb-0 text-muted small">Consultant:
+                            {% if r.doctor %}
+                            Dr. {{ r.doctor.username }}
+                            {% else %}
+                            Not Assigned
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2 mt-4">
+                    <a href="{{ url_for('view_report', timestamp=r.timestamp) }}" target="_blank"
+                        class="btn btn-outline-primary rounded-pill btn-sm">
+                        <i class="fas fa-file-pdf me-2"></i>Download Report
+                    </a>
+                    <a href="{{ url_for('chat', timestamp=r.timestamp) }}"
+                        class="btn btn-light rounded-pill btn-sm text-primary">
+                        <i class="fas fa-comments me-2"></i>Chat with Doctor
+                    </a>
+                </div>
+            </div>
+            {% if r.doctor_replies_list %}
+            <div class="card-footer bg-light bg-opacity-50 border-0 py-2">
+                <small class="text-success"><i class="fas fa-reply me-1"></i> New message from doctor</small>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="text-center py-5 fade-in-up card shadow-sm rounded-4 bg-white">
+    <div class="icon-box mx-auto mb-3" style="font-size: 3rem; color: var(--primary-color);">
+        <i class="fas fa-notes-medical"></i>
+    </div>
+    <h3 class="text-dark">No records yet</h3>
+    <p class="text-muted mb-4">You haven't performed any screenings yet. Start your first one now!</p>
+    <a href="{{ url_for('start_screening') }}" class="btn btn-primary rounded-pill px-5">Get Started</a>
+</div>
+{% endif %}
+{% endblock %}

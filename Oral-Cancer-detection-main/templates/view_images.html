@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}Patient Images - {{ record.timestamp }}{% endblock %}
+
+{% block content %}
+<div class="container fade-in-up">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold text-primary mb-1">Patient Images</h2>
+            <p class="text-muted mb-0">Record ID: {{ record.timestamp }} | Patient: {{ record.username }}</p>
+        </div>
+        <a href="{{ url_for('doctor_dashboard') }}" class="btn btn-outline-secondary rounded-pill px-4">
+            <i class="fas fa-arrow-left me-2"></i> Back to Dashboard
+        </a>
+    </div>
+
+    <div class="row g-4">
+        {% set images = record.image_path.split(',') if record.image_path else [] %}
+        {% for img in images %}
+        {% if img %}
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100 overflow-hidden rounded-4 hover-scale">
+                <div class="card-img-top position-relative" style="height: 300px;">
+                    <img src="{{ url_for('static', filename='uploads/' + img | basename) }}"
+                        class="w-100 h-100 object-fit-cover" alt="Patient Scan {{ loop.index }}"
+                        onclick="window.open(this.src, '_blank')">
+                    <div
+                        class="position-absolute top-0 start-0 m-3 badge bg-dark bg-opacity-50 text-white backdrop-blur">
+                        Image {{ loop.index }}
+                    </div>
+                </div>
+                <div class="card-body bg-light">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="small text-muted">Click image to enlarge</span>
+                        <a href="{{ url_for('static', filename='uploads/' + img | basename) }}" download
+                            class="btn btn-sm btn-outline-primary rounded-circle">
+                            <i class="fas fa-download"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        {% else %}
+        <div class="col-12 text-center py-5">
+            <div class="text-muted display-1 mb-3"><i class="fas fa-image"></i></div>
+            <h4>No images available for this record.</h4>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="mt-5 p-4 bg-white rounded-4 shadow-sm border">
+        <h5 class="fw-bold mb-3"><i class="fas fa-info-circle me-2 text-primary"></i>AI Analysis Details</h5>
+        <div class="row">
+            <div class="col-md-3">
+                <div class="text-muted small">Prediction</div>
+                <div class="fw-bold {% if 'Cancer' in record.prediction %}text-danger{% else %}text-success{% endif %}">
+                    {{ record.prediction }}
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-muted small">Confidence</div>
+                <div class="fw-bold">{{ record.confidence }}%</div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-muted small">Status</div>
+                <div class="fw-bold">{{ record.status }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

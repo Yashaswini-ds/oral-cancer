@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Doctor Registration{% endblock %}
+
+{% block content %}
+<div class="auth-container fade-in-up">
+    <div class="auth-box">
+        <h2 class="text-center mb-4" style="color: var(--primary-color);">Doctor Registration</h2>
+
+        <form action="{{ url_for('register_doctor') }}" method="POST" class="auth-form">
+            <div class="mb-3">
+                <input type="text" name="username" class="form-control" required placeholder="Full Name (Dr. ...)">
+            </div>
+            <div class="mb-3">
+                <input type="email" name="email" class="form-control" required placeholder="Email Address">
+            </div>
+            <div class="mb-3">
+                <input type="text" name="specialization" class="form-control" required placeholder="Specialization">
+            </div>
+            <div class="mb-3">
+                <input type="password" name="password" class="form-control" required placeholder="Password">
+            </div>
+            <button type="submit" class="btn btn-primary w-100 py-3 rounded-pill fw-bold shadow-sm">Register as
+                Doctor</button>
+        </form>
+        <div class="text-center mt-4">
+            <p class="mb-0">Already have an account? <a href="{{ url_for('auth') }}"
+                    class="text-primary fw-bold text-decoration-none">Login here</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}
