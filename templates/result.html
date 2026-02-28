@@ -17,6 +17,9 @@
             class="badge {% if 'Cancer' in prediction %}bg-danger-light text-danger{% else %}bg-success-light text-success{% endif %} px-4 py-2 rounded-pill mt-2">
             {{ confidence }}% Confidence Score
           </div>
+          <div class="mt-2 text-muted" style="font-size: 0.65rem; opacity: 0.6;">
+            Raw Model Score: {{ "%.4f"|format(avg_score|default(0)) }}
+          </div>
         </div>
 
         <div class="image-preview-box rounded-4 overflow-hidden border mb-4 bg-light shadow-inner"

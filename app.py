@@ -64,6 +64,7 @@ from email_service import (
     send_appointment_confirmation,
     send_appointment_to_doctor,
 )
+from ai_agent import aria_bp
 
 # Load environment variables from .env file for local development
 load_dotenv()
@@ -82,6 +83,9 @@ login_manager.login_view = 'auth'
 
 # Initialize Flask-Mail
 init_mail(app)
+
+# Register ARIA Blueprint
+app.register_blueprint(aria_bp)
 
 # Database initialization
 with app.app_context():
@@ -135,6 +139,13 @@ def index_page():
 def start_screening():
     doctors = User.query.filter_by(role='doctor').all()
     return render_template('index.html', doctors=doctors)
+
+@app.route('/aria_screening')
+@login_required
+def aria_screening():
+    """ARIA AI-guided voice screening page."""
+    doctors = User.query.filter_by(role='doctor').all()
+    return render_template('aria_screening.html', doctors=doctors)
 
 def remove_invalid_chars(text):
     return ''.join(c for c in text if unicodedata.category(c) != 'Mn')
@@ -206,9 +217,10 @@ def predict():
                 img_array = image.img_to_array(img)
                 img_array = np.expand_dims(img_array, axis=0) / 255.0
                 
-                # Model returns a probability (0 to 1)
-                # Assuming closer to 0 is Cancer (based on original code: < 0.5 is Risk)
+                # Model returns sigmoid probability (0 to 1)
+                # > 0.5 = Cancer (positive class), < 0.5 = Non-Cancer (negative class)
                 score = model.predict(img_array)[0][0]
+                print(f"[Prediction] {img_path}: score={score:.4f}")
                 total_prediction_score += score
                 valid_predictions += 1
             except Exception as e:
@@ -220,22 +232,22 @@ def predict():
             return "Prediction failed for all images.", 500
 
         # Determine class based on average score
-        # Original: < 0.5 => Risk (Cancer)
+        # For this specific model: < 0.5 indicates HIGH RISK (Cancer)
         pred_class = "Risk (Cancer)" if avg_score < 0.5 else "Low Risk (Non-Cancer)"
         
-        # Confidence logic (randomized as per original, or derived from score deviation)
-        # Keeping original random logic for UI consistency request, or improving it?
-        # Let's derive it from distance to 0.5 for more realism if desired, but adhering to user's 'average' request.
-        # User said "average of the prediction", which implies the score.
-        # But 'confidence' in original was random. Let's make confidence reflect the strength of the avg prediction.
-        # If avg_score is 0.1, confidence of cancer is high. If 0.9, confidence of non-cancer is high.
-        dist = abs(avg_score - 0.5) * 2 # 0 to 1
-        confidence = round(dist * 100, 2)
-        if confidence < 70: confidence = round(random.uniform(75, 98), 2) # Fallback to high confidence as per original behavior if uncertain? 
-        # Actually user asked for "average of the prediction", let's stick to the class determination.
-        # Reverting to original random confidence behavior to minimize variable disruption, 
-        # calculating it once for the set.
-        confidence = round(random.uniform(77, 97), 2)
+        # Calculate real confidence based on model output
+        # If score is 0.1, confidence of Cancer is 0.9 (90%)
+        # If score is 0.9, confidence of Non-Cancer is 0.9 (90%)
+        if avg_score < 0.5:
+            # Score closer to 0 = stronger Cancer prediction
+            confidence = round((1 - avg_score) * 100, 2)
+        else:
+            # Score closer to 1 = stronger Non-Cancer prediction
+            confidence = round(avg_score * 100, 2)
+
+        # Log for verification (the user can check terminal logs)
+        print(f"DEBUG: Combined average score from H5 model: {avg_score:.4f}")
+        print(f"DEBUG: Final Prediction: {pred_class} with {confidence}% real model confidence")
 
         # Store all paths joined by comma
         stored_image_path = ",".join(image_paths)
@@ -321,6 +333,7 @@ def predict():
             image_path=image_paths[0], # Show first image as primary in result page
             stored_image_path=stored_image_path, # Pass all images for the report
             symptoms=symptoms,
+            avg_score=avg_score,
             timestamp=timestamp
         )
     except Exception as e:
@@ -603,7 +616,7 @@ def create_pdf_file(prediction, confidence, image_path, timestamp, symptoms=None
         
         pdf.set_text_color(0, 0, 0) # Reset
         pdf.set_font("Times", '', 11)
-        pdf.multi_cell(0, 6, f"\nBased on AI analysis of the provided imagery and patient declaration, the system indicates {status_text}. This result has a confidence score of {confidence}%. Please refer to the detailed observation section below.")
+        pdf.multi_cell(0, 6, f"\nBased on AI analysis of the provided imagery, the system indicates {status_text}. This result has a confidence score of {confidence}%. Please refer to the detailed observation section below.")
         pdf.ln(8)
 
         # --- SECTION 2: PATIENT SYMPTOMS ---

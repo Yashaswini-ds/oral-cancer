@@ -1,0 +1,966 @@
+{% extends "base.html" %}
+{% block title %}Dr. Yashaswini — AI Screening Assistant{% endblock %}
+
+{# Override container so we get full-width #}
+{% block container_wrapper %}
+
+<style>
+    /* ══════════════════════════════════════════════════════
+       ARIA SCREENING — Premium Dark Theme v2
+       ══════════════════════════════════════════════════════ */
+
+    /* ── Page Shell ── */
+    body {
+        background: #070b18 !important;
+        font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+    }
+
+    .aria-shell {
+        display: grid;
+        grid-template-columns: 400px 1fr;
+        grid-template-rows: 1fr auto;
+        gap: 0;
+        height: calc(100vh - 68px);
+        overflow: hidden;
+    }
+
+    @media(max-width:900px) {
+        .aria-shell {
+            grid-template-columns: 1fr;
+            grid-template-rows: auto 1fr auto;
+            height: auto;
+        }
+    }
+
+    /* ── Left Panel – ARIA Face ── */
+    .aria-left {
+        background: linear-gradient(175deg, #0c1229 0%, #070d1e 40%, #0a0e22 100%);
+        border-right: 1px solid rgba(67, 97, 238, 0.12);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 1.5rem 1rem 0;
+        overflow: hidden;
+        position: relative;
+    }
+
+    /* Subtle animated background particles */
+    .aria-left::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background:
+            radial-gradient(ellipse at 30% 20%, rgba(67, 97, 238, 0.06) 0%, transparent 50%),
+            radial-gradient(ellipse at 70% 70%, rgba(124, 58, 237, 0.04) 0%, transparent 50%);
+        pointer-events: none;
+        animation: bgShift 8s ease-in-out infinite alternate;
+    }
+
+    @keyframes bgShift {
+        0% {
+            opacity: 0.6;
+        }
+
+        100% {
+            opacity: 1;
+        }
+    }
+
+    /* ── Avatar Container ── */
+    .aria-face-wrap {
+        position: relative;
+        width: 240px;
+        height: 270px;
+        flex-shrink: 0;
+        z-index: 2;
+    }
+
+    /* Orbiting ring 1 */
+    .aria-face-wrap::before {
+        content: '';
+        position: absolute;
+        inset: -24px;
+        border-radius: 50%;
+        border: 2px solid transparent;
+        border-top-color: rgba(67, 97, 238, 0.5);
+        border-right-color: rgba(67, 97, 238, 0.2);
+        animation: orbitSpin 6s linear infinite;
+        pointer-events: none;
+    }
+
+    /* Orbiting ring 2 */
+    .aria-face-wrap::after {
+        content: '';
+        position: absolute;
+        inset: -36px;
+        border-radius: 50%;
+        border: 1.5px solid transparent;
+        border-bottom-color: rgba(124, 58, 237, 0.35);
+        border-left-color: rgba(124, 58, 237, 0.15);
+        animation: orbitSpin 9s linear infinite reverse;
+        pointer-events: none;
+    }
+
+    @keyframes orbitSpin {
+        from {
+            transform: rotate(0deg);
+        }
+
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    /* Glow ring SVG container */
+    .glow-ring-wrap {
+        position: absolute;
+        inset: -18px;
+        width: calc(100% + 36px);
+        height: calc(100% + 36px);
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    #glowRing {
+        width: 100%;
+        height: 100%;
+    }
+
+    #glowRing circle {
+        transition: stroke 0.6s ease, filter 0.6s ease;
+    }
+
+    @keyframes glowPulse {
+
+        0%,
+        100% {
+            opacity: 0.6;
+        }
+
+        50% {
+            opacity: 1;
+        }
+    }
+
+    /* Face SVG */
+    .aria-face-wrap svg.face-svg {
+        width: 100%;
+        height: 100%;
+        animation: aria-breathe 5s ease-in-out infinite;
+        filter: drop-shadow(0 8px 30px rgba(67, 97, 238, 0.25));
+        position: relative;
+        z-index: 2;
+        transition: filter 0.6s ease;
+    }
+
+    @keyframes aria-breathe {
+
+        0%,
+        100% {
+            transform: scale(1);
+        }
+
+        50% {
+            transform: scale(1.012);
+        }
+    }
+
+    /* ── Status Label ── */
+    #ariaStatusLabel {
+        margin-top: .85rem;
+        color: #7b8db8;
+        font-size: .8rem;
+        font-weight: 500;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        min-height: 1.3rem;
+        transition: color 0.5s ease;
+        text-align: center;
+        z-index: 2;
+    }
+
+    /* ── Transcript ── */
+    .aria-transcript {
+        flex: 1;
+        width: 100%;
+        overflow-y: auto;
+        padding: 1rem .5rem;
+        display: flex;
+        flex-direction: column;
+        gap: .55rem;
+        scrollbar-width: thin;
+        scrollbar-color: #1a2545 transparent;
+        z-index: 2;
+    }
+
+    .aria-msg {
+        display: flex;
+    }
+
+    .aria-msg.aria {
+        justify-content: flex-start;
+    }
+
+    .aria-msg.user {
+        justify-content: flex-end;
+    }
+
+    .aria-bubble {
+        max-width: 88%;
+        padding: .65rem 1rem;
+        border-radius: 16px;
+        font-size: .86rem;
+        line-height: 1.55;
+        word-break: break-word;
+    }
+
+    .aria-msg.aria .aria-bubble {
+        background: rgba(26, 42, 74, 0.85);
+        color: #c8d8f0;
+        border-bottom-left-radius: 4px;
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(67, 97, 238, 0.1);
+    }
+
+    .aria-msg.user .aria-bubble {
+        background: linear-gradient(135deg, #4361ee, #5a2ee0);
+        color: white;
+        border-bottom-right-radius: 4px;
+        box-shadow: 0 2px 12px rgba(67, 97, 238, 0.25);
+    }
+
+    /* ── Typing Indicator Dots ── */
+    .typing-dot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #4361ee;
+        animation: typingBounce 1.2s ease-in-out infinite;
+    }
+
+    @keyframes typingBounce {
+
+        0%,
+        60%,
+        100% {
+            transform: translateY(0);
+            opacity: 0.4;
+        }
+
+        30% {
+            transform: translateY(-6px);
+            opacity: 1;
+        }
+    }
+
+    /* ── Right Panel ── */
+    .aria-right {
+        background: #0c1120;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .aria-right-inner {
+        flex: 1;
+        overflow-y: auto;
+        padding: 1.5rem;
+        scrollbar-width: thin;
+        scrollbar-color: #1a2545 transparent;
+    }
+
+    /* Progress */
+    .prog-section {
+        margin-bottom: 1.5rem;
+    }
+
+    .prog-section h6 {
+        color: #4361ee;
+        font-size: .72rem;
+        text-transform: uppercase;
+        letter-spacing: .12em;
+        margin-bottom: .6rem;
+        font-weight: 700;
+    }
+
+    .prog-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: .5rem .75rem;
+        border-radius: 10px;
+        background: rgba(20, 27, 46, 0.7);
+        margin-bottom: .35rem;
+        border: 1px solid rgba(30, 42, 80, 0.5);
+        font-size: .82rem;
+        transition: all 0.35s ease;
+    }
+
+    .prog-row .label {
+        color: #5a6d96;
+    }
+
+    .prog-row .value {
+        color: #7a8bb0;
+        font-style: italic;
+    }
+
+    .prog-row.done {
+        border-color: rgba(22, 163, 74, 0.25);
+        background: rgba(10, 46, 26, 0.6);
+    }
+
+    .prog-row.done .value {
+        color: #4ade80;
+        font-style: normal;
+        font-weight: 600;
+    }
+
+    /* Photo Slots */
+    .photo-slot {
+        border: 2px dashed rgba(30, 42, 80, 0.6);
+        border-radius: 14px;
+        padding: 1rem;
+        text-align: center;
+        transition: all .4s cubic-bezier(0.4, 0, 0.2, 1);
+        background: rgba(14, 24, 40, 0.6);
+        margin-bottom: .75rem;
+        position: relative;
+    }
+
+    .photo-slot.aria-highlight {
+        border-color: #4361ee;
+        box-shadow: 0 0 20px rgba(67, 97, 238, 0.3), inset 0 0 20px rgba(67, 97, 238, 0.05);
+        animation: pulse-border 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse-border {
+
+        0%,
+        100% {
+            box-shadow: 0 0 10px rgba(67, 97, 238, 0.2);
+        }
+
+        50% {
+            box-shadow: 0 0 30px rgba(67, 97, 238, 0.5), inset 0 0 20px rgba(67, 97, 238, 0.05);
+        }
+    }
+
+    .photo-slot img.preview {
+        max-height: 120px;
+        width: 100%;
+        object-fit: cover;
+        border-radius: 8px;
+        display: none;
+    }
+
+    .photo-badge {
+        position: absolute;
+        top: .5rem;
+        right: .5rem;
+        background: linear-gradient(135deg, #4361ee, #7c3aed);
+        color: white;
+        font-size: .68rem;
+        padding: .2rem .65rem;
+        border-radius: 20px;
+        display: none;
+        font-weight: 600;
+    }
+
+    /* ── Input Bar ── */
+    .aria-input-bar {
+        background: rgba(10, 15, 28, 0.95);
+        backdrop-filter: blur(12px);
+        border-top: 1px solid rgba(30, 42, 80, 0.4);
+        padding: 1rem 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: .75rem;
+        grid-column: 1 / -1;
+    }
+
+    #micBtn {
+        width: 54px;
+        height: 54px;
+        border-radius: 50%;
+        border: none;
+        background: linear-gradient(135deg, #4361ee, #7c3aed);
+        color: white;
+        font-size: 1.25rem;
+        cursor: pointer;
+        flex-shrink: 0;
+        transition: transform .15s, box-shadow .3s, background 0.4s;
+        touch-action: none;
+        user-select: none;
+        box-shadow: 0 4px 20px rgba(67, 97, 238, 0.3);
+    }
+
+    #micBtn:hover {
+        transform: scale(1.05);
+        box-shadow: 0 6px 28px rgba(67, 97, 238, 0.45);
+    }
+
+    #micBtn:active {
+        transform: scale(.94);
+    }
+
+    #textInput {
+        flex: 1;
+        background: rgba(20, 27, 48, 0.8);
+        border: 1px solid rgba(30, 42, 80, 0.5);
+        border-radius: 50px;
+        color: #d0daf0;
+        padding: .7rem 1.25rem;
+        font-size: .88rem;
+        outline: none;
+        transition: border-color .3s, box-shadow .3s;
+    }
+
+    #textInput:focus {
+        border-color: #4361ee;
+        box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.12);
+    }
+
+    #textInput::placeholder {
+        color: #3a4566;
+    }
+
+    #sendBtn {
+        background: linear-gradient(135deg, #4361ee, #5a2ee0);
+        border: none;
+        border-radius: 50%;
+        width: 44px;
+        height: 44px;
+        color: white;
+        cursor: pointer;
+        flex-shrink: 0;
+        transition: transform .2s, box-shadow .3s;
+        box-shadow: 0 2px 12px rgba(67, 97, 238, 0.2);
+    }
+
+    #sendBtn:hover {
+        transform: scale(1.05);
+        box-shadow: 0 4px 20px rgba(67, 97, 238, 0.35);
+    }
+
+    /* Submit CTA */
+    #submitArea {
+        display: none;
+        padding: 1rem 1.5rem;
+        background: rgba(10, 15, 28, 0.95);
+        border-top: 1px solid rgba(22, 163, 74, 0.2);
+        justify-content: center;
+        grid-column: 1 / -1;
+    }
+
+    .btn-submit-final {
+        background: linear-gradient(135deg, #16a34a, #059669);
+        color: white;
+        border: none;
+        padding: .85rem 2.5rem;
+        border-radius: 50px;
+        font-size: 1rem;
+        font-weight: 700;
+        cursor: pointer;
+        box-shadow: 0 4px 24px rgba(22, 163, 74, 0.35);
+        transition: transform .2s, box-shadow .3s;
+    }
+
+    .btn-submit-final:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 32px rgba(22, 163, 74, 0.45);
+    }
+
+    /* Top bar */
+    .aria-topbar {
+        background: rgba(8, 11, 22, 0.95);
+        backdrop-filter: blur(12px);
+        border-bottom: 1px solid rgba(30, 42, 80, 0.3);
+        padding: .75rem 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        grid-column: 1 / -1;
+    }
+
+    .aria-brand {
+        color: #4361ee;
+        font-weight: 800;
+        font-size: 1.05rem;
+        letter-spacing: .04em;
+    }
+
+    .aria-brand i {
+        background: linear-gradient(135deg, #4361ee, #7c3aed);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .btn-exit {
+        color: #6b7da8;
+        font-size: .78rem;
+        text-decoration: none;
+        padding: .4rem .9rem;
+        border: 1px solid rgba(30, 42, 80, 0.5);
+        border-radius: 20px;
+        transition: all .3s ease;
+    }
+
+    .btn-exit:hover {
+        color: #c8d8f0;
+        border-color: #4361ee;
+        box-shadow: 0 0 12px rgba(67, 97, 238, 0.15);
+    }
+
+    /* ── Name Plate ── */
+    .aria-nameplate {
+        text-align: center;
+        margin-top: 0.5rem;
+        z-index: 2;
+    }
+
+    .aria-nameplate h5 {
+        color: #e0e8f8;
+        font-size: 1rem;
+        font-weight: 700;
+        margin: 0;
+        letter-spacing: 0.02em;
+    }
+
+    .aria-nameplate span {
+        color: #5a6d96;
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+    }
+
+    /* Habits hidden divs */
+    #tbDiv,
+    #alcDiv,
+    #smkDiv {
+        display: none;
+    }
+
+    /* ── Ambient floating particles ── */
+    .particle {
+        position: absolute;
+        width: 3px;
+        height: 3px;
+        background: rgba(67, 97, 238, 0.3);
+        border-radius: 50%;
+        pointer-events: none;
+        animation: float-particle linear infinite;
+    }
+
+    @keyframes float-particle {
+        0% {
+            transform: translateY(0) scale(1);
+            opacity: 0;
+        }
+
+        20% {
+            opacity: 1;
+        }
+
+        80% {
+            opacity: 0.5;
+        }
+
+        100% {
+            transform: translateY(-200px) scale(0.3);
+            opacity: 0;
+        }
+    }
+</style>
+
+<!-- Hidden actual form submitted to /predict -->
+<form id="ariaForm" action="{{ url_for('predict') }}" method="post" enctype="multipart/form-data" style="display:none">
+    <input type="hidden" name="doctor_id" id="hf_doctor_id">
+    <input type="hidden" name="pain_level" id="hf_pain_level">
+    <input type="hidden" name="bleeding" id="hf_bleeding">
+    <input type="hidden" name="swelling" id="hf_swelling">
+    <input type="hidden" name="duration" id="hf_duration">
+    <input type="hidden" name="history" id="hf_history">
+    <input type="hidden" name="tobacco_years" id="hf_tobacco_years">
+    <input type="hidden" name="alcohol_years" id="hf_alcohol_years">
+    <input type="hidden" name="smoking_years" id="hf_smoking_years">
+    <input type="hidden" name="trismus_test" id="hf_trismus_test">
+    <input type="hidden" name="mouth_pain" id="hf_mouth_pain">
+    <input type="hidden" name="extra_details" id="hf_extra_details">
+    <input type="hidden" name="camera_image1" id="camera_input_1">
+    <input type="hidden" name="camera_image2" id="camera_input_2">
+    <input type="hidden" name="camera_image3" id="camera_input_3">
+    <!-- Habits checkboxes (hidden but need name="habits") -->
+    <input type="checkbox" name="habits" value="Tobacco" id="cbTobacco" style="display:none">
+    <input type="checkbox" name="habits" value="Alcohol" id="cbAlcohol" style="display:none">
+    <input type="checkbox" name="habits" value="Smoking" id="cbSmoking" style="display:none">
+    <!-- dummy divs for toggleYears compat -->
+    <div id="tbDiv"><input type="number" name="tobacco_years_v" style="display:none"></div>
+    <div id="alcDiv"><input type="number" name="alcohol_years_v" style="display:none"></div>
+    <div id="smkDiv"><input type="number" name="smoking_years_v" style="display:none"></div>
+</form>
+
+<div style="display:grid; grid-template-rows:auto 1fr auto; height:calc(100vh - 68px); overflow:hidden;">
+
+    <!-- Top Bar -->
+    <div class="aria-topbar">
+        <span class="aria-brand"><i class="fas fa-user-md me-2"></i>Dr. Yashaswini — AI Screening</span>
+        <a href="{{ url_for('start_screening') }}" class="btn-exit"><i class="fas fa-edit me-1"></i>Fill Manually</a>
+    </div>
+
+    <!-- Main Grid -->
+    <div class="aria-shell" style="height:100%; overflow:hidden;">
+
+        <!-- ── LEFT: ARIA FACE ── -->
+        <div class="aria-left" id="ariaLeftPanel">
+
+            <div class="aria-face-wrap">
+                <!-- Glow ring SVG -->
+                <div class="glow-ring-wrap">
+                    <svg id="glowRing" viewBox="0 0 296 326" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#4361ee" stop-opacity="0.8" />
+                                <stop offset="50%" stop-color="#7c3aed" stop-opacity="0.4" />
+                                <stop offset="100%" stop-color="#4361ee" stop-opacity="0.8" />
+                            </linearGradient>
+                        </defs>
+                        <ellipse id="glowCircle" cx="148" cy="158" rx="140" ry="154" stroke="url(#ringGrad)"
+                            stroke-width="2.5" fill="none" stroke-dasharray="12 6" stroke-linecap="round"
+                            style="transition: stroke 0.6s, filter 0.6s; filter: drop-shadow(0 0 8px rgba(67,97,238,0.3));" />
+                    </svg>
+                </div>
+
+                <!-- ARIA Face SVG — Refined & Beautiful -->
+                <svg class="face-svg" viewBox="0 0 300 340" xmlns="http://www.w3.org/2000/svg" id="ariaFaceSvg">
+                    <defs>
+                        <radialGradient id="skinGrad" cx="50%" cy="45%" r="55%">
+                            <stop offset="0%" stop-color="#FDE8C8" />
+                            <stop offset="100%" stop-color="#EDCEA0" />
+                        </radialGradient>
+                        <radialGradient id="cheekGrad" cx="50%" cy="50%" r="50%">
+                            <stop offset="0%" stop-color="#F9A0A0" stop-opacity="0.35" />
+                            <stop offset="100%" stop-color="#F9A0A0" stop-opacity="0" />
+                        </radialGradient>
+                        <linearGradient id="coatGrad" x1="50%" y1="0%" x2="50%" y2="100%">
+                            <stop offset="0%" stop-color="#F0F4FF" />
+                            <stop offset="100%" stop-color="#D8E2F8" />
+                        </linearGradient>
+                        <linearGradient id="hairGrad" x1="50%" y1="0%" x2="50%" y2="100%">
+                            <stop offset="0%" stop-color="#3D2010" />
+                            <stop offset="100%" stop-color="#1A0A04" />
+                        </linearGradient>
+                        <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+                            <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#00000022" />
+                        </filter>
+                    </defs>
+
+                    <!-- White Coat Body -->
+                    <path d="M60 265 Q90 248 150 244 Q210 248 240 265 L255 340 H45 Z" fill="url(#coatGrad)"
+                        filter="url(#softShadow)" />
+                    <!-- Blue V-neck -->
+                    <path d="M100 244 L150 292 L200 244" fill="#3B82F6" opacity=".75" />
+                    <!-- Coat collar detail -->
+                    <path d="M125 244 L150 268 L175 244" stroke="#CBD5E1" stroke-width="1.5" fill="none" />
+
+                    <!-- Stethoscope -->
+                    <path d="M145 280 Q136 296 140 308 Q145 316 150 316 Q155 316 160 308 Q164 296 155 280"
+                        stroke="#94A3B8" stroke-width="2.5" fill="none" stroke-linecap="round" />
+                    <!-- Medical cross -->
+                    <rect x="145" y="303" width="10" height="22" rx="2" fill="#3B82F6" />
+                    <rect x="138" y="310" width="24" height="9" rx="2" fill="#3B82F6" />
+
+                    <!-- Neck -->
+                    <rect x="130" y="216" width="40" height="36" rx="14" fill="url(#skinGrad)" />
+
+                    <!-- Hair back -->
+                    <ellipse cx="150" cy="88" rx="95" ry="68" fill="url(#hairGrad)" />
+                    <!-- Hair sides -->
+                    <ellipse cx="62" cy="152" rx="26" ry="65" fill="url(#hairGrad)" />
+                    <ellipse cx="238" cy="152" rx="26" ry="65" fill="url(#hairGrad)" />
+                    <!-- Hair top / bun -->
+                    <circle cx="150" cy="42" r="30" fill="#3D2010" />
+                    <path d="M122 58 Q150 36 178 58" fill="#3D2010" />
+
+                    <!-- Head -->
+                    <ellipse cx="150" cy="155" rx="88" ry="102" fill="url(#skinGrad)" />
+                    <!-- Forehead highlight -->
+                    <ellipse cx="150" cy="108" rx="60" ry="35" fill="#FDE8C8" opacity=".5" />
+
+                    <!-- Eyebrows — refined arches -->
+                    <path d="M100,130 Q115,118 133,126" stroke="#2C1A0E" stroke-width="3" fill="none"
+                        stroke-linecap="round" />
+                    <path d="M167,126 Q185,118 200,130" stroke="#2C1A0E" stroke-width="3" fill="none"
+                        stroke-linecap="round" />
+
+                    <!-- Eyelashes -->
+                    <path d="M95,143 Q103,133 110,138 Q117,133 124,140 Q130,133 137,143" stroke="#1a0000"
+                        stroke-width="1.8" fill="none" />
+                    <path d="M163,143 Q171,133 178,138 Q185,133 192,140 Q199,133 205,143" stroke="#1a0000"
+                        stroke-width="1.8" fill="none" />
+
+                    <!-- Eye whites -->
+                    <ellipse cx="115" cy="152" rx="21" ry="12.5" fill="white" />
+                    <ellipse cx="185" cy="152" rx="21" ry="12.5" fill="white" />
+
+                    <!-- Iris — warmer brown -->
+                    <circle cx="115" cy="152" r="10" fill="#6B3A2A" />
+                    <circle cx="185" cy="152" r="10" fill="#6B3A2A" />
+                    <circle cx="115" cy="152" r="7" fill="#8B5235" />
+                    <circle cx="185" cy="152" r="7" fill="#8B5235" />
+
+                    <!-- Pupils -->
+                    <circle cx="115" cy="152" r="4.2" fill="#080204" />
+                    <circle cx="185" cy="152" r="4.2" fill="#080204" />
+
+                    <!-- Eye shine — double highlight for depth -->
+                    <circle cx="119" cy="148" r="2.8" fill="white" opacity=".92" />
+                    <circle cx="189" cy="148" r="2.8" fill="white" opacity=".92" />
+                    <circle cx="113" cy="155" r="1.3" fill="white" opacity=".45" />
+                    <circle cx="183" cy="155" r="1.3" fill="white" opacity=".45" />
+
+                    <!-- Eyelids — for blink animation -->
+                    <ellipse id="blinkL" cx="115" cy="152" rx="21" ry="0" fill="url(#skinGrad)" />
+                    <ellipse id="blinkR" cx="185" cy="152" rx="21" ry="0" fill="url(#skinGrad)" />
+
+                    <!-- Nose — refined -->
+                    <path d="M143,178 Q150,192 157,178" stroke="#C4905A" stroke-width="1.3" fill="none"
+                        stroke-linecap="round" />
+                    <ellipse cx="141" cy="189" rx="4.5" ry="3" fill="#D4A070" opacity=".5" />
+                    <ellipse cx="159" cy="189" rx="4.5" ry="3" fill="#D4A070" opacity=".5" />
+
+                    <!-- Cheek blush — radial gradient -->
+                    <ellipse cx="92" cy="177" rx="22" ry="13" fill="url(#cheekGrad)" />
+                    <ellipse cx="208" cy="177" rx="22" ry="13" fill="url(#cheekGrad)" />
+
+                    <!-- Earrings — golden with shine -->
+                    <circle cx="63" cy="168" r="6" fill="#F7C948" opacity=".85" />
+                    <circle cx="65" cy="166" r="1.5" fill="white" opacity=".5" />
+                    <circle cx="237" cy="168" r="6" fill="#F7C948" opacity=".85" />
+                    <circle cx="239" cy="166" r="1.5" fill="white" opacity=".5" />
+
+                    <!-- Upper lip -->
+                    <path d="M122,205 Q135,197 150,201 Q165,197 178,205" fill="#D4707A" stroke="#B05060"
+                        stroke-width=".4" />
+                    <!-- Lower lip / mouth (animated) -->
+                    <path id="mouthLower" d="M122,205 Q150,215 178,205" fill="#C8607A" stroke="#B05060"
+                        stroke-width=".4" />
+                    <!-- Mouth interior (animated) -->
+                    <ellipse id="mouthInner" cx="150" cy="207" rx="25" ry="0" fill="#5A1820" />
+
+                    <!-- Bindi (forehead) for Indian doctor look -->
+                    <circle cx="150" cy="113" r="3.5" fill="#CC2233" opacity="0.75" />
+                </svg>
+            </div>
+
+            <!-- Name plate -->
+            <div class="aria-nameplate">
+                <h5>Dr. Yashaswini</h5>
+                <span>AI Screening Specialist</span>
+            </div>
+
+            <div id="ariaStatusLabel">Ready</div>
+
+            <!-- Transcript -->
+            <div class="aria-transcript" id="transcript"></div>
+        </div>
+
+        <!-- ── RIGHT: FORM PROGRESS + PHOTOS ── -->
+        <div class="aria-right">
+            <div class="aria-right-inner">
+
+                <p class="text-secondary small mb-3" style="color:#5a6d96!important;">
+                    <i class="fas fa-user-md me-1" style="color:#4361ee"></i>
+                    Dr. Yashaswini fills this form as you speak. Take photos when prompted.
+                </p>
+
+                <!-- Progress: Clinical -->
+                <div class="prog-section">
+                    <h6><i class="fas fa-clipboard-list me-1"></i>Clinical Information</h6>
+                    {% set fields = [
+                    ('doctor_id', 'Consulting Doctor'),
+                    ('pain_level', 'Pain Level'),
+                    ('bleeding', 'Bleeding'),
+                    ('swelling', 'Swelling'),
+                    ('duration', 'Symptom Duration'),
+                    ('history', 'Medical History'),
+                    ('habits', 'Habits'),
+                    ('trismus_test','Trismus Test'),
+                    ('mouth_pain', 'Mouth Pain'),
+                    ('extra_details','Extra Details'),
+                    ] %}
+                    {% for fid, flabel in fields %}
+                    <div class="prog-row" id="prog_{{ fid }}">
+                        <span class="label">{{ flabel }}</span>
+                        <span class="value">Waiting…</span>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Progress: Photos -->
+                <div class="prog-section">
+                    <h6><i class="fas fa-camera me-1"></i>Clinical Photos</h6>
+
+                    {% for i, lbl in [(1,'Front View'),(2,'Left Lateral'),(3,'Right Lateral')] %}
+                    <div class="photo-slot" id="photoSlot{{ i }}">
+                        <span class="photo-badge" id="photoLabel{{ i }}">📸 Dr. Yashaswini is asking for this
+                            photo</span>
+
+                        <label style="color:#5a6d96; font-size:.8rem; display:block; margin-bottom:.5rem;">
+                            <i class="fas fa-camera me-1"></i>{{ lbl }}
+                        </label>
+
+                        <!-- File upload -->
+                        <input type="file" accept="image/*" style="display:none" id="fileInput{{ i }}"
+                            onchange="previewFile({{ i }}, this)">
+
+                        <!-- Camera capture -->
+                        <div class="d-flex gap-2 justify-content-center mb-2">
+                            <button type="button" onclick="openAriaCamera({{ i }})"
+                                style="background:rgba(30,42,80,0.6);color:#94a3c0;border:1px solid rgba(42,58,96,0.5);border-radius:8px;padding:.4rem .8rem;font-size:.78rem;cursor:pointer;transition:all .2s;">
+                                <i class="fas fa-video me-1"></i>Camera
+                            </button>
+                            <button type="button" onclick="document.getElementById('fileInput{{ i }}').click()"
+                                style="background:rgba(30,42,80,0.6);color:#94a3c0;border:1px solid rgba(42,58,96,0.5);border-radius:8px;padding:.4rem .8rem;font-size:.78rem;cursor:pointer;transition:all .2s;">
+                                <i class="fas fa-upload me-1"></i>Upload
+                            </button>
+                        </div>
+
+                        <img id="preview{{ i }}" class="preview" alt="Preview" style="display:none">
+
+                        <button type="button" id="confirmBtn{{ i }}" onclick="photoConfirmed({{ i }})"
+                            style="display:none;background:linear-gradient(135deg,#16a34a,#059669);color:white;border:none;border-radius:8px;
+                               padding:.4rem 1rem;font-size:.8rem;cursor:pointer;margin-top:.5rem;box-shadow:0 2px 12px rgba(22,163,74,0.2);">
+                            <i class="fas fa-check me-1"></i>Confirm Photo
+                        </button>
+
+                        <div class="prog-row mt-2 mb-0" id="prog_photo_{{ i }}"
+                            style="background:rgba(13,18,32,0.5); border:none;">
+                            <span class="label">{{ lbl }}</span>
+                            <span class="value">Not captured</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+            </div><!-- /inner -->
+        </div><!-- /right -->
+
+    </div><!-- /shell grid -->
+
+    <!-- Input Bar -->
+    <div class="aria-input-bar">
+        <button id="micBtn" title="Click to start/stop speaking"><i id="micIcon" class="fas fa-microphone"></i></button>
+        <input id="textInput" type="text" placeholder="Or type your answer here… then press Enter">
+        <button id="sendBtn" title="Send"><i class="fas fa-paper-plane"></i></button>
+    </div>
+
+    <!-- Submit Area -->
+    <div id="submitArea">
+        <div style="text-align:center">
+            <p style="color:#4ade80; margin-bottom:.75rem; font-size:.9rem;">
+                <i class="fas fa-check-circle me-2"></i>All information collected!
+            </p>
+            <button class="btn-submit-final" onclick="submitScreening()">
+                <i class="fas fa-rocket me-2"></i>Run AI Prediction Now
+            </button>
+        </div>
+    </div>
+
+</div><!-- /outer grid -->
+
+<!-- ── Camera Modal ── -->
+<div class="modal fade" id="cameraModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-white border-0 rounded-4">
+            <div class="modal-header border-0">
+                <h6 class="modal-title"><i class="fas fa-camera me-2 text-primary"></i>Capture Photo</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center p-3">
+                <video id="ariaVideo" autoplay playsinline muted
+                    style="width:100%;border-radius:12px;background:#000;"></video>
+                <canvas id="ariaCanvas" style="display:none"></canvas>
+            </div>
+            <div class="modal-footer border-0 justify-content-center">
+                <button type="button" class="btn btn-primary rounded-pill px-4" onclick="ariaCapturePhoto()">
+                    <i class="fas fa-circle me-2"></i>Capture
+                </button>
+                <button type="button" class="btn btn-secondary rounded-pill" data-bs-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ── Camera helpers for ARIA page ──
+    let ariaVideoStream = null;
+    let ariaCamTarget = 1;
+
+    function openAriaCamera(idx) {
+        ariaCamTarget = idx;
+        const modal = new bootstrap.Modal(document.getElementById('cameraModal'));
+        modal.show();
+        const video = document.getElementById('ariaVideo');
+        if (!navigator.mediaDevices) { alert('Camera not available on HTTP. Use HTTPS or localhost.'); return; }
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+            .catch(() => navigator.mediaDevices.getUserMedia({ video: true }))
+            .then(stream => { ariaVideoStream = stream; video.srcObject = stream; video.play(); })
+            .catch(() => alert('Cannot access camera.'));
+        document.getElementById('cameraModal').addEventListener('hidden.bs.modal', () => {
+            if (ariaVideoStream) { ariaVideoStream.getTracks().forEach(t => t.stop()); ariaVideoStream = null; }
+        }, { once: true });
+    }
+
+    function ariaCapturePhoto() {
+        const video = document.getElementById('ariaVideo');
+        const canvas = document.getElementById('ariaCanvas');
+        canvas.width = video.videoWidth || 640;
+        canvas.height = video.videoHeight || 480;
+        canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+        setPhoto(ariaCamTarget, dataUrl);
+        bootstrap.Modal.getInstance(document.getElementById('cameraModal')).hide();
+    }
+
+    function previewFile(idx, input) {
+        if (!input.files[0]) return;
+        const reader = new FileReader();
+        reader.onload = e => setPhoto(idx, e.target.result);
+        reader.readAsDataURL(input.files[0]);
+    }
+
+    function setPhoto(idx, dataUrl) {
+        document.getElementById('camera_input_' + idx).value = dataUrl;
+        const prev = document.getElementById('preview' + idx);
+        prev.src = dataUrl; prev.style.display = 'block';
+        document.getElementById('confirmBtn' + idx).style.display = 'inline-block';
+        document.getElementById('photoLabel' + idx).style.display = 'block';
+    }
+
+    // ── Ambient Particles ──
+    (function spawnParticles() {
+        const panel = document.getElementById('ariaLeftPanel');
+        if (!panel) return;
+        for (let i = 0; i < 6; i++) {
+            const p = document.createElement('div');
+            p.className = 'particle';
+            p.style.left = (15 + Math.random() * 70) + '%';
+            p.style.bottom = '-10px';
+            p.style.animationDuration = (6 + Math.random() * 6) + 's';
+            p.style.animationDelay = (Math.random() * 6) + 's';
+            p.style.width = (2 + Math.random() * 2) + 'px';
+            p.style.height = p.style.width;
+            panel.appendChild(p);
+        }
+    })();
+</script>
+
+<script src="{{ url_for('static', filename='js/aria_agent.js') }}"></script>
+
+{% endblock %}
