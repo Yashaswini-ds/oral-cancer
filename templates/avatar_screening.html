@@ -1,0 +1,554 @@
+{% extends 'base.html' %}
+
+{% block title %}AI Virtual Doctor{% endblock %}
+
+{% block content %}
+<div class="container-fluid min-vh-100 d-flex flex-column bg-dark text-white pt-5">
+
+    <div class="row flex-grow-1 align-items-center justify-content-center">
+        <div class="col-12 col-md-8 col-lg-6 text-center">
+
+            <h2 class="mb-4 fw-bold">Virtual AI Doctor</h2>
+            <p class="text-secondary mb-5">Talk to Dr. AI. She will guide you through the oral cancer screening process.
+            </p>
+
+            <!-- Premium 2.5D Avatar Visual (User Provided Image) -->
+            <div id="avatar-container"
+                class="position-relative mx-auto mb-5 d-flex align-items-center justify-content-center floating-avatar"
+                style="width: 280px; height: 280px;">
+
+                <!-- Dynamic pulse rings -->
+                <div id="talk-ring-1"
+                    class="position-absolute w-100 h-100 rounded-circle border border-info border-3 opacity-0 transition-opacity z-1"
+                    style="transform: scale(1.15); box-shadow: 0 0 15px rgba(13, 202, 240, 0.5);"></div>
+                <div id="talk-ring-2"
+                    class="position-absolute w-100 h-100 rounded-circle border border-primary border-2 opacity-0 transition-opacity z-1"
+                    style="transform: scale(1.3); box-shadow: 0 0 20px rgba(13, 110, 253, 0.4);"></div>
+
+                <!-- Doctor Image Cutout -->
+                <div id="avatar-image-wrapper"
+                    class="w-100 h-100 rounded-circle overflow-hidden border border-4 border-light shadow-lg z-2 shadow-transition position-relative"
+                    style="box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                    <!-- High-quality provided image -->
+                    <img src="{{ url_for('static', filename='img/doctor-avatar.jpg') }}" alt="Dr. AI"
+                        class="w-100 h-100 object-fit-cover" id="avatar-img"
+                        onerror="this.src='https://ui-avatars.com/api/?name=Dr+AI&background=0D8ABC&color=fff&size=280'">
+
+                    <!-- Inner glow overlay -->
+                    <div class="position-absolute top-0 start-0 w-100 h-100 rounded-circle"
+                        style="box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.6); pointer-events: none;"></div>
+                </div>
+
+                <!-- Glowing indicator badge when listening -->
+                <div id="listen-indicator"
+                    class="position-absolute bottom-0 end-0 translate-middle p-3 bg-danger border border-white border-2 rounded-circle z-3 d-none pulse-animation"
+                    style="width: 20px; height: 20px; box-shadow: 0 0 15px rgba(220, 53, 69, 0.8);"
+                    title="Listening..."></div>
+            </div>
+
+            <!-- Chat / Subtitles Box (Premium Glassmorphism) -->
+            <div id="chat-box" class="glass-box rounded-4 p-4 mb-4 text-start shadow-glass mx-auto position-relative"
+                style="max-width: 650px; height: 200px; overflow-y: auto;">
+                <div class="text-info mb-3 fs-5" style="letter-spacing: 1px;"><i
+                        class="fas fa-stethoscope me-2"></i><strong>Dr. AI</strong></div>
+                <div id="ai-subtitle" class="fs-4 text-light fw-light" style="line-height: 1.6; letter-spacing: 0.5px;">
+                    Initializing
+                    secure connection...</div>
+            </div>
+
+            <!-- Controls -->
+            <div class="d-flex justify-content-center gap-4 mt-5 mb-3">
+                <button id="btn-start"
+                    class="btn btn-primary btn-lg rounded-pill px-5 py-3 shadow-glass fs-5 fw-bold glass-button"
+                    style="transition: all 0.3s ease; background: linear-gradient(135deg, #0d6efd, #0dcaf0); border: none;">
+                    <i class="fas fa-play me-2"></i> Start Consultation
+                </button>
+
+                <button id="btn-mic"
+                    class="btn btn-danger btn-lg rounded-circle shadow-glass d-flex align-items-center justify-content-center glass-button"
+                    style="width: 70px; height: 70px; display: none; transition: all 0.3s ease; border: none;">
+                    <i class="fas fa-microphone fa-lg text-white"></i>
+                </button>
+            </div>
+
+            <div id="recording-status" class="text-danger mt-3 d-none pulse-text fw-bold fs-5">
+                <i class="fas fa-circle me-2"></i> Listening...
+            </div>
+
+            <!-- Hidden Audio for TTS -->
+            <audio id="tts-audio" style="display: none;"></audio>
+
+            <!-- Hidden Form for Image Uploads triggered by AI -->
+            <div id="image-upload-section"
+                class="mt-5 p-4 border border-info rounded-4 glass-box d-none shadow-glass position-relative overflow-hidden">
+                <!-- Subtle glow inside upload section -->
+                <div class="position-absolute top-0 start-50 translate-middle-x w-50 h-50 rounded-circle opacity-25"
+                    style="background: radial-gradient(circle, #0dcaf0 0%, transparent 70%); filter: blur(40px); pointer-events: none;">
+                </div>
+                <h4 class="text-warning mb-4 fw-bold"><i class="fas fa-camera retro-icon me-2"></i>Please upload 3 clear
+                    images of your mouth
+                </h4>
+                <form id="avatar-image-form" enctype="multipart/form-data">
+                    <div class="row g-3">
+                        <div class="col-12 col-md-4">
+                            <label class="form-label small text-light fw-bold">Image 1</label>
+                            <input type="file" class="form-control bg-dark text-white border-secondary p-3"
+                                name="image1" accept="image/*" required>
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <label class="form-label small text-light fw-bold">Image 2</label>
+                            <input type="file" class="form-control bg-dark text-white border-secondary p-3"
+                                name="image2" accept="image/*" required>
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <label class="form-label small text-light fw-bold">Image 3</label>
+                            <input type="file" class="form-control bg-dark text-white border-secondary p-3"
+                                name="image3" accept="image/*" required>
+                        </div>
+                    </div>
+                    <button type="button" id="btn-submit-images"
+                        class="btn btn-success btn-lg mt-4 w-100 rounded-pill py-3 fw-bold shadow-lg"
+                        style="transition: all 0.3s ease;">
+                        <i class="fas fa-cloud-upload-alt me-2"></i> Submit Images to Doctor
+                    </button>
+                </form>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Modern Animated Mesh Gradient Background */
+    body {
+        background: linear-gradient(120deg, #020617 0%, #0f172a 50%, #1e293b 100%) !important;
+        background-size: 200% 200% !important;
+        animation: gradientBG 15s ease infinite !important;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    @keyframes gradientBG {
+        0% {
+            background-position: 0% 50%;
+        }
+
+        50% {
+            background-position: 100% 50%;
+        }
+
+        100% {
+            background-position: 0% 50%;
+        }
+    }
+
+    /* Premium Glassmorphism Classes */
+    .glass-box {
+        background: rgba(15, 23, 42, 0.4);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-top: 1px solid rgba(255, 255, 255, 0.15);
+        border-left: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .shadow-glass {
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    }
+
+    .glass-button:hover {
+        background: rgba(255, 255, 255, 0.1) !important;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    }
+
+    .glass-box::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .glass-box::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 10px;
+    }
+
+    .glass-box::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.3);
+    }
+
+    /* Floating Animation for Avatar */
+    @keyframes float {
+        0% {
+            transform: translateY(0px);
+        }
+
+        50% {
+            transform: translateY(-10px);
+        }
+
+        100% {
+            transform: translateY(0px);
+        }
+    }
+
+    .floating-avatar {
+        animation: float 6s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+        0% {
+            transform: scale(1);
+            opacity: 0.8;
+        }
+
+        100% {
+            transform: scale(1.5);
+            opacity: 0;
+        }
+    }
+
+    .pulse-animation {
+        animation: pulse 2s infinite ease-out;
+        box-sizing: border-box;
+    }
+
+    @keyframes blink {
+        0% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0;
+        }
+
+        100% {
+            opacity: 1;
+        }
+    }
+
+    .pulse-text {
+        animation: blink 1.5s infinite;
+    }
+
+    /* When AI is talking */
+    .avatar-talking #pulse-ring-1 {
+        border-color: #0dcaf0 !important;
+        animation-duration: 1s;
+    }
+
+    .avatar-talking #pulse-ring-2 {
+        border-color: #0d6efd !important;
+        animation-duration: 1s;
+    }
+
+    .object-fit-cover {
+        object-fit: cover;
+    }
+
+    .transition-opacity {
+        transition: opacity 0.4s ease-in-out;
+    }
+
+    .shadow-transition {
+        transition: box-shadow 0.4s ease-in-out, transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    /* AI Talking State */
+    @keyframes talk-pulse-1 {
+        0% {
+            transform: scale(1);
+            opacity: 0.85;
+        }
+
+        100% {
+            transform: scale(1.23);
+            opacity: 0;
+        }
+    }
+
+    @keyframes talk-pulse-2 {
+        0% {
+            transform: scale(1);
+            opacity: 0.6;
+        }
+
+        100% {
+            transform: scale(1.42);
+            opacity: 0;
+        }
+    }
+
+    .avatar-talking #talk-ring-1 {
+        opacity: 1;
+        animation: talk-pulse-1 1.2s infinite ease-out;
+        border-color: #0dcaf0 !important;
+    }
+
+    .avatar-talking #talk-ring-2 {
+        opacity: 1;
+        animation: talk-pulse-2 1.5s infinite ease-out 0.2s;
+        border-color: #0d6efd !important;
+    }
+
+    .avatar-talking #avatar-image-wrapper {
+        box-shadow: 0 0 50px rgba(13, 202, 240, 0.5), 0 10px 30px rgba(0, 0, 0, 0.5) !important;
+        border-color: #0dcaf0 !important;
+        transform: scale(1.05);
+    }
+
+    /* AI Thinking State */
+    .avatar-thinking #avatar-image-wrapper {
+        box-shadow: 0 0 35px rgba(255, 193, 7, 0.6), 0 10px 30px rgba(0, 0, 0, 0.5) !important;
+        border-color: #ffc107 !important;
+    }
+
+    /* Interactive Button Hover */
+    #btn-start:hover,
+    #btn-submit-images:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 15px 25px rgba(0, 0, 0, 0.4) !important;
+    }
+
+    #btn-mic:hover {
+        transform: scale(1.1);
+        box-shadow: 0 0 20px rgba(255, 255, 255, 0.2) !important;
+    }
+</style>
+
+<!-- Import model-viewer for 3D Avatar -->
+<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const btnStart = document.getElementById('btn-start');
+        const btnMic = document.getElementById('btn-mic');
+        const subtitle = document.getElementById('ai-subtitle');
+        const avatarContainer = document.getElementById('avatar-container');
+        const listenIndicator = document.getElementById('listen-indicator');
+        const recordingStatus = document.getElementById('recording-status');
+        const imageUploadSection = document.getElementById('image-upload-section');
+        const btnSubmitImages = document.getElementById('btn-submit-images');
+
+        let chatHistory = [];
+        let isRecording = false;
+        let recognition = null;
+        let synth = window.speechSynthesis;
+        let collectedSymptoms = "";
+
+        // Initialize Web Speech API
+        if ('webkitSpeechRecognition' in window) {
+            recognition = new webkitSpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            recognition.lang = 'en-US'; // Can be made dynamic for multilingual
+
+            recognition.onstart = () => {
+                isRecording = true;
+                btnMic.classList.replace('btn-secondary', 'btn-danger');
+                recordingStatus.classList.remove('d-none');
+                listenIndicator.classList.remove('d-none');
+            };
+
+            recognition.onerror = (e) => {
+                console.error('Speech recognition error', e);
+                stopRecordingState();
+            };
+
+            recognition.onend = () => {
+                stopRecordingState();
+            };
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                console.log("User said:", transcript);
+                subtitle.innerText = `You: ${transcript}`;
+                sendToAI(transcript);
+            };
+        } else {
+            alert("Your browser does not support Speech Recognition. Please use Chrome or Edge.");
+        }
+
+        function stopRecordingState() {
+            isRecording = false;
+            btnMic.classList.replace('btn-danger', 'btn-secondary');
+            recordingStatus.classList.add('d-none');
+            listenIndicator.classList.add('d-none');
+        }
+
+        // Start consultation
+        btnStart.addEventListener('click', () => {
+            btnStart.style.display = 'none';
+            btnMic.style.display = 'inline-block';
+            subtitle.innerText = "Connecting to Dr. AI...";
+
+            // Initial greeting
+            sendToAI("Hello Doctor, I am ready for my oral screening.");
+        });
+
+        // Microphone toggle
+        btnMic.addEventListener('click', () => {
+            if (isRecording) {
+                recognition.stop();
+            } else {
+                // Cancel any ongoing AI speech so user can talk
+                synth.cancel();
+                stopAvatarTalking();
+                recognition.start();
+            }
+        });
+
+        async function sendToAI(userMessage) {
+            // Collect symptoms text from user chat to pass to form later
+            if (userMessage.length > 20) {
+                collectedSymptoms += userMessage + ". ";
+            }
+
+            const formData = new FormData();
+            formData.append('message', userMessage);
+            formData.append('history', JSON.stringify(chatHistory));
+
+            subtitle.innerHTML = '<span class="text-secondary">Dr. AI is thinking <i class="fas fa-circle-notch fa-spin ms-1"></i></span>';
+            avatarContainer.classList.add('avatar-thinking');
+
+            try {
+                const response = await fetch('/api/avatar_chat', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                avatarContainer.classList.remove('avatar-thinking');
+
+                const data = await response.json();
+
+                if (data.error) {
+                    subtitle.innerText = "Error: " + data.error;
+                    return;
+                }
+
+                // Add to history
+                if (userMessage) chatHistory.push({ text: userMessage, isAi: false });
+                chatHistory.push({ text: data.response, isAi: true });
+
+                // Display and Speak
+                subtitle.innerHTML = `<span class="text-light">${data.response}</span>`;
+                speakText(data.response);
+
+                // Check if AI requested images (heuristic or precise key)
+                if (data.response.toLowerCase().includes("upload 3 clear images") || data.response.toLowerCase().includes("upload three images")) {
+                    setTimeout(() => {
+                        imageUploadSection.classList.remove('d-none');
+                    }, 3000); // Show form after a delay so AI finishes talking
+                }
+
+                // Check completion
+                if (data.is_complete) {
+                    subtitle.innerHTML = '<span class="text-success">Screening complete. Generating report...</span>';
+                    // Now we submit the stored images and symptoms to /predict implicitly.
+                    // This logic would ideally happen when images are submitted.
+                }
+
+            } catch (error) {
+                console.error("Chat Error:", error);
+                subtitle.innerText = "Connection error. Please try again.";
+            }
+        }
+
+        function startAvatarTalking() {
+            avatarContainer.classList.add('avatar-talking');
+        }
+
+        function stopAvatarTalking() {
+            avatarContainer.classList.remove('avatar-talking');
+        }
+
+        function speakText(text) {
+            if (!synth) return;
+
+            // Cancel existing
+            synth.cancel();
+
+            const utterance = new SpeechSynthesisUtterance(text);
+
+            // Customizations for "Doctor" voice
+            const voices = synth.getVoices();
+            // Try to find a professional female voice e.g., Google UK English Female or similar
+            const preferredVoice = voices.find(v => v.name.includes('Female') && v.lang.includes('en')) || voices[0];
+            if (preferredVoice) utterance.voice = preferredVoice;
+
+            utterance.rate = 0.95; // Slightly slower
+            utterance.pitch = 1.0;
+
+            utterance.onstart = () => {
+                startAvatarTalking();
+            };
+
+            utterance.onend = () => {
+                stopAvatarTalking();
+            };
+
+            utterance.onerror = () => {
+                stopAvatarTalking();
+            };
+
+            synth.speak(utterance);
+        }
+
+        // Ensure voices load (browser quirk)
+        synth.onvoiceschanged = () => { synth.getVoices(); };
+
+        // Handle Image Submission & Symptom Extraction
+        btnSubmitImages.addEventListener('click', async () => {
+            btnSubmitImages.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Analyzing Conversation...';
+            btnSubmitImages.disabled = true;
+
+            const formObj = document.getElementById('avatar-image-form');
+            const formData = new FormData(formObj);
+
+            try {
+                // 1. Extract the structured symptoms from Groq
+                const summaryFormData = new FormData();
+                summaryFormData.append('history', JSON.stringify(chatHistory));
+
+                const summaryResponse = await fetch('/api/avatar_summary', {
+                    method: 'POST',
+                    body: summaryFormData
+                });
+
+                const summaryData = await summaryResponse.json();
+
+                // 2. Append the structured data to the main submission
+                if (summaryData.symptoms) {
+                    formData.append('pain_level', summaryData.symptoms.pain_level || 'Not provided');
+                    formData.append('bleeding', summaryData.symptoms.bleeding || 'Not provided');
+                    formData.append('swelling', summaryData.symptoms.swelling || 'Not provided');
+                    formData.append('duration', summaryData.symptoms.duration || 'Not provided');
+                    formData.append('history', summaryData.symptoms.habits || 'Not provided');
+                } else {
+                    // Fallback
+                    formData.append('extra_details', "Symptoms extracted from AI Chat: " + collectedSymptoms);
+                    formData.append('pain_level', 'Unknown');
+                    formData.append('history', 'Gathered via Avatar');
+                }
+
+                btnSubmitImages.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Processing Images...';
+
+                // 3. Submit to the final /predict route
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.redirected) {
+                    window.location.href = response.url;
+                } else {
+                    const html = await response.text();
+                    document.open();
+                    document.write(html);
+                    document.close();
+                }
+            } catch (e) {
+                console.error(e);
+                btnSubmitImages.innerHTML = 'Error. Try Again';
+                btnSubmitImages.disabled = false;
+            }
+        });
+    });
+</script>
+{% endblock %}

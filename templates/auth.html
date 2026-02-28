@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="auth-container fade-in-up">
+    <div class="auth-box shadow-lg">
+        <div class="auth-toggle d-flex justify-content-center mb-5 p-1 bg-light rounded-pill">
+            <button id="login-btn" class="btn btn-sm rounded-pill flex-fill fw-bold active"
+                onclick="showLogin()">Login</button>
+            <button id="signup-btn" class="btn btn-sm rounded-pill flex-fill fw-bold text-muted"
+                onclick="showSignup()">Sign Up</button>
+        </div>
+
+        <!-- Login Form -->
+        <form id="login-form" action="{{ url_for('auth') }}" method="POST" class="auth-form">
+            <input type="hidden" name="action" value="login">
+            <div class="text-center mb-5">
+                <h2 class="fw-black mb-2" style="color: var(--text-main); font-size: 2.25rem; letter-spacing: -1px;">
+                    Welcome Back</h2>
+                <p class="text-muted">Please enter your details to sign in</p>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label small fw-bold text-uppercase tracking-wider text-muted ms-1">Email
+                    Address</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0 text-muted px-3"><i
+                            class="fas fa-envelope"></i></span>
+                    <input type="email" name="email" class="form-control border-start-0 ps-0" required
+                        placeholder="name@example.com">
+                </div>
+            </div>
+            <div class="mb-4">
+                <label class="form-label small fw-bold text-uppercase tracking-wider text-muted ms-1">Password</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0 text-muted px-3"><i
+                            class="fas fa-lock"></i></span>
+                    <input type="password" name="password" class="form-control border-start-0 ps-0" required
+                        placeholder="••••••••">
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100 py-3 rounded-pill fw-bold shadow-sm">Login</button>
+            <div class="text-center mt-4">
+                <a href="{{ url_for('register_doctor') }}" class="text-decoration-none small fw-bold"
+                    style="color: var(--primary-color);">Healthcare Professional? Register here</a>
+            </div>
+        </form>
+
+        <!-- Signup Form -->
+        <form id="signup-form" action="{{ url_for('auth') }}" method="POST" class="auth-form" style="display: none;"
+            onsubmit="return validateSignup()">
+            <input type="hidden" name="action" value="signup">
+            <div class="text-center mb-5">
+                <h2 class="fw-black mb-2" style="color: var(--text-main); font-size: 2.25rem; letter-spacing: -1px;">
+                    Create Account</h2>
+                <p class="text-muted">Join thousands of proactive patients today</p>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label small fw-bold text-uppercase tracking-wider text-muted ms-1">Full Name</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0 text-muted px-3"><i
+                            class="fas fa-user"></i></span>
+                    <input type="text" name="username" class="form-control border-start-0 ps-0" required
+                        placeholder="John Doe">
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label small fw-bold text-uppercase tracking-wider text-muted ms-1">Email
+                    Address</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0 text-muted px-3"><i
+                            class="fas fa-envelope"></i></span>
+                    <input type="email" name="email" class="form-control border-start-0 ps-0" required
+                        placeholder="name@example.com">
+                </div>
+            </div>
+            <div class="mb-4">
+                <label class="form-label small fw-bold text-uppercase tracking-wider text-muted ms-1">Password</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0 text-muted px-3"><i
+                            class="fas fa-lock"></i></span>
+                    <input type="password" name="password" id="signup-password" class="form-control border-start-0 ps-0"
+                        required placeholder="••••••••">
+                </div>
+                <div id="password-error" class="text-danger small mt-2 fw-medium" style="display:none;"><i
+                        class="fas fa-exclamation-circle me-1"></i>Password must be at least 8 characters.
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100 py-3 rounded-pill fw-bold shadow-sm">Sign Up</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    function showLogin() {
+        document.getElementById('login-form').style.display = 'block';
+        document.getElementById('signup-form').style.display = 'none';
+
+        const loginBtn = document.getElementById('login-btn');
+        const signupBtn = document.getElementById('signup-btn');
+
+        loginBtn.classList.add('active', 'btn-primary');
+        loginBtn.classList.remove('text-muted');
+
+        signupBtn.classList.remove('active', 'btn-primary');
+        signupBtn.classList.add('text-muted');
+    }
+
+    function showSignup() {
+        document.getElementById('login-form').style.display = 'none';
+        document.getElementById('signup-form').style.display = 'block';
+
+        const loginBtn = document.getElementById('login-btn');
+        const signupBtn = document.getElementById('signup-btn');
+
+        signupBtn.classList.add('active', 'btn-primary');
+        signupBtn.classList.remove('text-muted');
+
+        loginBtn.classList.remove('active', 'btn-primary');
+        loginBtn.classList.add('text-muted');
+    }
+
+    // Initialize styles
+    document.addEventListener('DOMContentLoaded', function () {
+        const loginBtn = document.getElementById('login-btn');
+        loginBtn.classList.add('active', 'btn-primary');
+        loginBtn.classList.remove('text-muted');
+    });
+
+    function validateSignup() {
+        const password = document.getElementById('signup-password').value;
+        const errorDiv = document.getElementById('password-error');
+        if (password.length < 8) {
+            errorDiv.style.display = 'block';
+            return false;
+        }
+        errorDiv.style.display = 'none';
+        return true;
+    }
+</script>
+{% endblock %}

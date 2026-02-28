@@ -1,0 +1,336 @@
+{% extends "base.html" %}
+{% block title %}Start Screening{% endblock %}
+{% block content %}
+<div class="card shadow-lg border-0 rounded-4 overflow-hidden fade-in-up">
+  <div class="card-header bg-primary text-white p-4">
+    <h3 class="mb-0 fw-black"><i class="fas fa-microscope me-2"></i>Health Screening</h3>
+    <p class="mb-0 opacity-75 small">Please provide accurate information for the AI screening process</p>
+  </div>
+  <div class="card-body p-4 p-lg-5">
+
+    <!-- AI Doctor CTA -->
+    <div class="alert alert-info border-info border-2 bg-dark text-white rounded-4 shadow-sm mb-5">
+      <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+        <div>
+          <h5 class="mb-1 fw-bold text-info"><i class="fas fa-robot me-2"></i>New! Talk to Dr. AI</h5>
+          <p class="mb-0 small text-light opacity-75">Prefer talking over typing? Try our new interactive voice
+            screening avatar.</p>
+        </div>
+        <a href="{{ url_for('avatar_screening') }}"
+          class="btn btn-info rounded-pill fw-bold text-dark px-4 shadow-sm pulse-effect">
+          <i class="fas fa-microphone-alt me-2"></i>Consult Avatar
+        </a>
+      </div>
+    </div>
+    <div class="d-flex align-items-center mb-4 option-divider">
+      <hr class="flex-grow-1 text-secondary">
+      <span class="px-3 text-muted small fw-bold text-uppercase">Or fill the form below</span>
+      <hr class="flex-grow-1 text-secondary">
+    </div>
+
+    <form action="{{ url_for('predict') }}" method="post" enctype="multipart/form-data" class="row g-4"
+      id="screeningForm">
+
+      <!-- Image Upload Section -->
+      <div class="col-12">
+        <div class="d-flex align-items-center mb-4">
+          <div class="bg-primary-light text-primary p-2 rounded-3 me-3">
+            <i class="fas fa-camera text-xl"></i>
+          </div>
+          <h5 class="mb-0 fw-bold text-navy">Clinical Imaging</h5>
+        </div>
+
+        <div class="alert alert-info border-0 shadow-sm rounded-3 bg-light d-flex align-items-start p-4">
+          <i class="fas fa-info-circle text-primary mt-1 me-3 fs-5"></i>
+          <div class="small text-navy opacity-75">
+            High-quality images are critical for AI accuracy. We recommend capturing three distinct views (Front,
+            Left, Right) using either clear uploads or our integrated camera tool.
+          </div>
+        </div>
+
+        <div class="row g-4 mt-2">
+          <!-- Image 1 -->
+          <div class="col-12 col-md-4">
+            <div class="p-3 border border-dashed rounded-4 bg-light text-center h-100 transition-all hover-shadow">
+              <label class="form-label fw-bold text-navy mb-3">Front View Scan</label>
+              <input class="form-control mb-3" type="file" name="image1" accept="image/*" id="file1">
+              <div class="d-flex gap-2">
+                <button type="button" class="btn btn-secondary btn-sm w-100 py-2 rounded-pill" onclick="openCamera(1)">
+                  <i class="fas fa-video me-1"></i> Camera
+                </button>
+                <input type="hidden" name="camera_image1" id="camera_input_1">
+              </div>
+              <img id="preview1" class="img-thumbnail mt-3 d-none rounded-3 shadow-sm"
+                style="height: 160px; width: 100%; object-fit: cover;">
+            </div>
+          </div>
+          <!-- Image 2 -->
+          <div class="col-12 col-md-4">
+            <div class="p-3 border border-dashed rounded-4 bg-light text-center h-100 transition-all hover-shadow">
+              <label class="form-label fw-bold text-navy mb-3">Left Lateral View</label>
+              <input class="form-control mb-3" type="file" name="image2" accept="image/*" id="file2">
+              <div class="d-flex gap-2">
+                <button type="button" class="btn btn-secondary btn-sm w-100 py-2 rounded-pill" onclick="openCamera(2)">
+                  <i class="fas fa-video me-1"></i> Camera
+                </button>
+                <input type="hidden" name="camera_image2" id="camera_input_2">
+              </div>
+              <img id="preview2" class="img-thumbnail mt-3 d-none rounded-3 shadow-sm"
+                style="height: 160px; width: 100%; object-fit: cover;">
+            </div>
+          </div>
+          <!-- Image 3 -->
+          <div class="col-12 col-md-4">
+            <div class="p-3 border border-dashed rounded-4 bg-light text-center h-100 transition-all hover-shadow">
+              <label class="form-label fw-bold text-navy mb-3">Right Lateral View</label>
+              <input class="form-control mb-3" type="file" name="image3" accept="image/*" id="file3">
+              <div class="d-flex gap-2">
+                <button type="button" class="btn btn-secondary btn-sm w-100 py-2 rounded-pill" onclick="openCamera(3)">
+                  <i class="fas fa-video me-1"></i> Camera
+                </button>
+                <input type="hidden" name="camera_image3" id="camera_input_3">
+              </div>
+              <img id="preview3" class="img-thumbnail mt-3 d-none rounded-3 shadow-sm"
+                style="height: 160px; width: 100%; object-fit: cover;">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12 py-2">
+        <hr class="opacity-10">
+      </div>
+
+      <!-- Doctor Selection Section -->
+      <div class="col-12">
+        <div class="d-flex align-items-center mb-4">
+          <div class="bg-primary-light text-primary p-2 rounded-3 me-3">
+            <i class="fas fa-user-md text-xl"></i>
+          </div>
+          <h5 class="mb-0 fw-bold text-navy">Clinical Consultation</h5>
+        </div>
+
+        <div class="form-floating shadow-sm mb-2">
+          <select class="form-select border-1 rounded-3" id="doctor_id" name="doctor_id" required>
+            <option value="" selected disabled>Select a specialist for review...</option>
+            {% for doc in doctors %}
+            <option value="{{ doc.id }}">Dr. {{ doc.username }} ({{ doc.specialization or "General Dentistry" }})
+            </option>
+            {% endfor %}
+          </select>
+          <label for="doctor_id" class="text-muted">Consulting Specialist</label>
+        </div>
+        <div class="ps-2 small text-muted"><i class="fas fa-shield-alt me-1"></i> Your confidential data is shared
+          only with your chosen consultant.</div>
+      </div>
+
+      <div class="col-12 py-2">
+        <hr class="opacity-10">
+      </div>
+
+      <!-- Symptoms Section -->
+      <div class="col-12">
+        <div class="d-flex align-items-center mb-4">
+          <div class="bg-primary-light text-primary p-2 rounded-3 me-3">
+            <i class="fas fa-notes-medical text-xl"></i>
+          </div>
+          <h5 class="mb-0 fw-bold text-navy">Medical History & Symptoms</h5>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label small fw-bold text-muted">Aggravated Pain Level</label>
+        <select class="form-select rounded-3" name="pain_level" required>
+          <option value="" selected disabled>Choose level...</option>
+          <option>None</option>
+          <option>Mild</option>
+          <option>Moderate</option>
+          <option>High</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label small fw-bold text-muted">Active Bleeding</label>
+        <select class="form-select rounded-3" name="bleeding" required>
+          <option value="" selected disabled>Choose...</option>
+          <option>Yes</option>
+          <option>No</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label small fw-bold text-muted">Visible Swelling</label>
+        <select class="form-select rounded-3" name="swelling" required>
+          <option value="" selected disabled>Choose...</option>
+          <option>None</option>
+          <option>Mild</option>
+          <option>Moderate</option>
+          <option>Severe</option>
+        </select>
+      </div>
+
+      <div class="col-12 col-md-4">
+        <label class="form-label">Duration</label>
+        <input class="form-control" type="text" name="duration" placeholder="e.g., 2 weeks">
+      </div>
+      <div class="col-12 col-md-8">
+        <label class="form-label">Past Medical/Dental History</label>
+        <input class="form-control" type="text" name="history" placeholder="e.g., family history of oral cancer">
+      </div>
+
+      <div class="col-12">
+        <label class="form-label fw-bold">Habits</label><br>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="checkbox" id="habitTobacco" name="habits" value="Tobacco"
+            onchange="toggleYears('habitTobacco', 'tobaccoYearsDiv')">
+          <label class="form-check-label" for="habitTobacco">Tobacco</label>
+        </div>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="checkbox" id="habitAlcohol" name="habits" value="Alcohol"
+            onchange="toggleYears('habitAlcohol', 'alcoholYearsDiv')">
+          <label class="form-check-label" for="habitAlcohol">Alcohol</label>
+        </div>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="checkbox" id="habitSmoking" name="habits" value="Smoking"
+            onchange="toggleYears('habitSmoking', 'smokingYearsDiv')">
+          <label class="form-check-label" for="habitSmoking">Smoking</label>
+        </div>
+      </div>
+
+      <div class="col-6 col-md-4" id="tobaccoYearsDiv" style="display: none;">
+        <label class="form-label">Tobacco Years</label>
+        <input class="form-control" type="number" name="tobacco_years" min="0" step="1">
+      </div>
+      <div class="col-6 col-md-4" id="alcoholYearsDiv" style="display: none;">
+        <label class="form-label">Alcohol Years</label>
+        <input class="form-control" type="number" name="alcohol_years" min="0" step="1">
+      </div>
+      <div class="col-6 col-md-4" id="smokingYearsDiv" style="display: none;">
+        <label class="form-label">Smoking Years</label>
+        <input class="form-control" type="number" name="smoking_years" min="0" step="1">
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">3 Finger Trismus Test</label>
+        <select class="form-select" name="trismus_test">
+          <option value="" selected>Not answered</option>
+          <option>Pass</option>
+          <option>Fail</option>
+        </select>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Pain Opening Mouth</label>
+        <select class="form-select" name="mouth_pain">
+          <option value="" selected>Not answered</option>
+          <option>Yes</option>
+          <option>No</option>
+        </select>
+      </div>
+
+      <div class="col-12">
+        <label class="form-label">Extra Details</label>
+        <textarea class="form-control" name="extra_details" rows="3"></textarea>
+      </div>
+
+      <div class="col-12">
+        <button class="btn btn-primary w-100 py-3 rounded-pill fw-bold shadow-sm pulse-effect" type="submit">Run AI
+          Prediction</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  let currentCameraTarget = 0;
+  let videoStream = null;
+
+  function toggleYears(checkboxId, divId) {
+    const checkbox = document.getElementById(checkboxId);
+    const div = document.getElementById(divId);
+    if (checkbox.checked) {
+      div.style.display = 'block';
+      div.classList.add('fade-in-up');
+    } else {
+      div.style.display = 'none';
+      div.querySelector('input').value = ''; // clear value
+    }
+  }
+
+  function openCamera(targetIndex) {
+    currentCameraTarget = targetIndex;
+    const modal = new bootstrap.Modal(document.getElementById('cameraModal'));
+    modal.show();
+
+    // Ensure video element exists and reset
+    const video = document.getElementById('video');
+    video.srcObject = null;
+
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      // First try environment camera, if that fails (or not available), try any video source
+      const startCamera = (constraints) => {
+        navigator.mediaDevices.getUserMedia(constraints)
+          .then(stream => {
+            videoStream = stream;
+            video.srcObject = stream;
+            video.play();
+          })
+          .catch(err => {
+            console.error("Camera Error with constraints:", constraints, err);
+            if (constraints.video.facingMode) {
+              // Retry without facingMode constraint
+              console.log("Retrying without facingMode constraint...");
+              startCamera({ video: true });
+            } else {
+              alert("Unable to access camera. Please ensure you have granted camera permissions and are using HTTPS or localhost.");
+            }
+          });
+      };
+
+      startCamera({ video: { facingMode: "environment" } });
+
+    } else {
+      alert("Camera API not supported in this browser.");
+    }
+
+    // Stop stream on modal close
+    document.getElementById('cameraModal').addEventListener('hidden.bs.modal', function () {
+      if (videoStream) {
+        videoStream.getTracks().forEach(track => track.stop());
+        videoStream = null;
+      }
+    });
+  }
+
+  function capturePhoto() {
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+
+    if (!video.srcObject) {
+      alert("Camera not active!");
+      return;
+    }
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.8); // 0.8 quality to reduce size
+
+
+    // Set hidden input
+    document.getElementById(`camera_input_${currentCameraTarget}`).value = dataUrl;
+
+    // Show preview
+    const preview = document.getElementById(`preview${currentCameraTarget}`);
+    preview.src = dataUrl;
+    preview.classList.remove('d-none');
+
+    // Clear file input if any
+    document.getElementById(`file${currentCameraTarget}`).value = '';
+
+    // Close modal
+    const modalEl = document.getElementById('cameraModal');
+    const modal = bootstrap.Modal.getInstance(modalEl);
+    modal.hide();
+  }
+</script>
+{% endblock %}

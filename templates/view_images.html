@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}Patient Images - {{ record.timestamp }}{% endblock %}
+
+{% block content %}
+<div class="container py-5 fade-in-up">
+    <div
+        class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-5 gap-3">
+        <div>
+            <span class="badge bg-primary text-white mb-2 px-3 py-2 rounded-pill fw-light">Clinical Review</span>
+            <h2 class="fw-black text-navy mb-1">Patient Scan Gallery</h2>
+            <p class="text-muted mb-0">Record ID: <span class="fw-bold">{{ record.timestamp }}</span> | Patient: <span
+                    class="fw-bold">{{ record.username }}</span></p>
+        </div>
+        <a href="{{ url_for('doctor_dashboard') }}" class="btn btn-outline-primary rounded-pill px-4 fw-bold">
+            <i class="fas fa-arrow-left me-2"></i> Return to Dashboard
+        </a>
+    </div>
+
+    <div class="row g-4">
+        {% set images = record.image_path.split(',') if record.image_path else [] %}
+        {% for img in images %}
+        {% if img %}
+        <div class="col-md-4">
+            <div class="card border-0 shadow-md h-100 overflow-hidden rounded-4 transition-all hover-shadow">
+                <div class="card-img-top position-relative" style="height: 320px;">
+                    <img src="{{ url_for('static', filename='uploads/' + img | basename) }}"
+                        class="w-100 h-100 object-fit-cover cursor-pointer" alt="Patient Scan {{ loop.index }}"
+                        onclick="window.open(this.src, '_blank')">
+                    <div
+                        class="position-absolute top-0 start-0 m-3 badge bg-navy bg-opacity-75 text-white px-3 py-2 rounded-pill">
+                        View {{ loop.index }}
+                    </div>
+                </div>
+                <div class="card-body bg-white border-top">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="small text-muted fw-medium">High-resolution capture</span>
+                        <a href="{{ url_for('static', filename='uploads/' + img | basename) }}" download
+                            class="btn btn-sm btn-primary-light text-primary rounded-pill px-3">
+                            <i class="fas fa-download me-1"></i> Save
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        {% else %}
+        <div class="col-12 text-center py-5">
+            <div class="text-muted display-1 mb-3 opacity-25"><i class="fas fa-image"></i></div>
+            <h4 class="fw-bold text-muted">No data available for this record.</h4>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="mt-5 p-4 p-lg-5 bg-navy text-white rounded-4 shadow-xl position-relative overflow-hidden">
+        <div class="position-relative z-1">
+            <h4 class="fw-black mb-4"><i class="fas fa-brain me-3 text-primary"></i>AI Automated Analysis
+            </h4>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="p-3 rounded-3 bg-white bg-opacity-10">
+                        <div class="text-white text-opacity-75 small text-uppercase fw-bold mb-1">System
+                            Prediction</div>
+                        <div
+                            class="fs-4 fw-black {% if 'Cancer' in record.prediction %}text-danger{% else %}text-success{% endif %}">
+                            {{ record.prediction }}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="p-3 rounded-3 bg-white bg-opacity-10">
+                        <div class="text-white text-opacity-75 small text-uppercase fw-bold mb-1">Confidence
+                            Score</div>
+                        <div class="fs-4 fw-black">{{ record.confidence }}%</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="p-3 rounded-3 bg-white bg-opacity-10">
+                        <div class="text-white text-opacity-75 small text-uppercase fw-bold mb-1">Record Status</div>
+                        <div class="fs-4 fw-black">{{ record.status }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="position-absolute top-0 end-0 p-5 opacity-10">
+            <i class="fas fa-microscope" style="font-size: 8rem;"></i>
+        </div>
+    </div>
+</div>
+{% endblock %}

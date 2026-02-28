@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Welcome{% endblock %}
+{% block content %}
+<div class="p-4 bg-white rounded shadow-sm">
+  <h2>Welcome</h2>
+  <p>This is a placeholder welcome page.</p>
+  <a class="btn btn-primary" href="{{ url_for('index') }}">Home</a>
+</div>
+{% endblock %}

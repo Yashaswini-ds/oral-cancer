@@ -1,0 +1,464 @@
+{% extends "base.html" %}
+{% block title %}Patient Dashboard{% endblock %}
+
+{% block content %}
+<style>
+    body {
+        background-color: var(--bg-main);
+        font-family: 'Inter', sans-serif;
+    }
+
+    .dashboard-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2.5rem 1.5rem;
+    }
+
+    @media (max-width: 768px) {
+        .dashboard-container {
+            padding: 1.5rem 1rem;
+        }
+    }
+
+    /* Hero Section */
+    .hero-section {
+        background: var(--text-main);
+        background: linear-gradient(135deg, var(--text-main) 0%, #1e293b 100%);
+        border-radius: var(--radius-xl);
+        padding: 3.5rem 3rem;
+        color: white;
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 3rem;
+        box-shadow: var(--shadow-xl);
+    }
+
+    .hero-section::after {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 400px;
+        height: 400px;
+        background: var(--primary-color);
+        filter: blur(120px);
+        opacity: 0.2;
+        z-index: 0;
+        pointer-events: none;
+    }
+
+    /* Stats Cards */
+    .stat-card {
+        background: var(--surface);
+        border-radius: var(--radius-lg);
+        padding: 1.75rem;
+        transition: var(--transition);
+        border: 1px solid var(--border-color);
+        height: 100%;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-lg);
+        border-color: var(--primary-color);
+    }
+
+    .stat-icon-wrapper {
+        width: 54px;
+        height: 54px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-bottom: 1.25rem;
+        background: var(--primary-light);
+        color: var(--primary-color);
+    }
+
+    /* Record Cards */
+    .record-card {
+        background: var(--surface);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        border: 1px solid var(--border-color);
+        transition: var(--transition);
+        box-shadow: var(--shadow-md);
+    }
+
+    .record-card:hover {
+        transform: translateY(-8px);
+        box-shadow: var(--shadow-xl);
+        border-color: var(--primary-color);
+    }
+
+    .image-container {
+        position: relative;
+        padding-top: 65%;
+        background: #f1f5f9;
+        overflow: hidden;
+    }
+
+    .image-container img {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .record-card:hover .image-container img {
+        transform: scale(1.1);
+    }
+
+    .status-badge {
+        position: absolute;
+        top: 1.25rem;
+        right: 1.25rem;
+        padding: 0.5rem 1.25rem;
+        border-radius: 50px;
+        font-weight: 700;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        backdrop-filter: blur(12px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .risk-high {
+        background: rgba(239, 68, 68, 0.95);
+        color: white;
+    }
+
+    .risk-low {
+        background: rgba(16, 185, 129, 0.95);
+        color: white;
+    }
+
+    /* Search Bar */
+    .search-input {
+        background: var(--surface);
+        border: 1.5px solid var(--border-color);
+        padding: 0.85rem 1.25rem 0.85rem 3.5rem;
+        border-radius: 50px;
+        width: 100%;
+        max-width: 360px;
+        transition: var(--transition);
+        box-shadow: var(--shadow-sm);
+        color: var(--text-main);
+    }
+
+    .search-input:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 4px var(--primary-light);
+        outline: none;
+    }
+
+    /* Custom Buttons */
+    .btn-custom-primary {
+        background: var(--primary-color);
+        color: white;
+        border: none;
+        padding: 0.85rem 2rem;
+        border-radius: 50px;
+        font-weight: 700;
+        transition: var(--transition);
+        box-shadow: 0 4px 12px rgba(67, 97, 238, 0.2);
+    }
+
+    .btn-custom-primary:hover {
+        background: var(--primary-hover);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(67, 97, 238, 0.3);
+        color: white;
+    }
+
+    .btn-custom-outline {
+        background: transparent;
+        color: var(--primary-color);
+        border: 2px solid var(--primary-color);
+        padding: 0.75rem 2rem;
+        border-radius: 50px;
+        font-weight: 700;
+        transition: var(--transition);
+    }
+
+    .btn-custom-outline:hover {
+        background: var(--primary-color);
+        color: white;
+        transform: translateY(-2px);
+    }
+
+    /* Animation */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .animate-fade-in {
+        animation: fadeInUp 0.5s ease-out forwards;
+    }
+
+    .delay-100 {
+        animation-delay: 0.1s;
+        opacity: 0;
+    }
+
+    .delay-200 {
+        animation-delay: 0.2s;
+        opacity: 0;
+    }
+
+    .delay-300 {
+        animation-delay: 0.3s;
+        opacity: 0;
+    }
+</style>
+
+<div class="dashboard-container">
+    <!-- Welcome Header -->
+    <div class="hero-section py-responsive px-responsive animate-fade-in mb-4 mb-md-5">
+        <div class="hero-bg-pattern" style="pointer-events: none;"></div>
+        <div class="row align-items-center position-relative g-4" style="z-index: 2;">
+            <div class="col-lg-7">
+                <span class="badge bg-white bg-opacity-25 mb-3 px-3 py-2 rounded-pill fw-light">Welcome Back</span>
+                <h1 class="display-5 fw-black mb-2">{{ current_user.username }}</h1>
+                <p class="lead opacity-75 mb-0">Manage your screenings and access your health reports.</p>
+            </div>
+            <div class="col-lg-5 text-lg-end position-relative" style="z-index: 10;">
+                <div class="d-flex flex-wrap gap-3 justify-content-lg-end">
+                    <a href="{{ url_for('start_screening') }}"
+                        class="btn bg-white text-primary fw-bold rounded-pill px-4 py-3 shadow-lg hover-scale flex-fill flex-lg-grow-0">
+                        <i class="fas fa-file-medical me-2"></i>Screen by Form
+                    </a>
+
+                    <a href="{{ url_for('avatar_screening') }}"
+                        class="btn bg-dark text-info fw-bold rounded-pill border border-info px-4 py-3 shadow-lg hover-scale flex-fill flex-lg-grow-0 d-flex align-items-center justify-content-center"
+                        style="transition: all 0.3s;">
+                        <i class="fas fa-robot me-2 fs-5"></i>AI Doctor
+                    </a>
+
+                    <a href="{{ url_for('appointments') }}"
+                        class="btn bg-white text-primary fw-bold rounded-pill px-4 py-3 shadow-lg hover-scale flex-fill flex-lg-grow-0 w-100">
+                        <i class="fas fa-calendar-alt me-2"></i>Appointments
+                    </a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+{% if patient_records and patient_records|length %}
+<!-- Statistics -->
+<div class="row g-4 mb-5 animate-fade-in delay-100">
+    <div class="col-12 col-md-4">
+        <div class="stat-card">
+            <div class="stat-icon-wrapper bg-blue-100 text-primary" style="background-color: #dbeafe; color: #1e40af;">
+                <i class="fas fa clipboard-list"></i>
+            </div>
+            <h3 class="fw-bold mb-1">{{ patient_records|length }}</h3>
+            <p class="text-secondary small mb-0 fw-bold text-uppercase">Total Reports</p>
+        </div>
+    </div>
+    <div class="col-12 col-md-4">
+        <div class="stat-card">
+            <div class="stat-icon-wrapper" style="background-color: #fee2e2; color: #991b1b;">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h3 class="fw-bold mb-1" id="highRiskCount">-</h3>
+            <p class="text-secondary small mb-0 fw-bold text-uppercase">Action Needed</p>
+        </div>
+    </div>
+    <div class="col-12 col-md-4">
+        <div class="stat-card">
+            <div class="stat-icon-wrapper" style="background-color: #d1fae5; color: #065f46;">
+                <i class="fas fa-comments"></i>
+            </div>
+            <h3 class="fw-bold mb-1" id="doctorRepliesCount">-</h3>
+            <p class="text-secondary small mb-0 fw-bold text-uppercase">Doctor Feedback</p>
+        </div>
+    </div>
+</div>
+
+<!-- Controls -->
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 animate-fade-in delay-200">
+    <h4 class="fw-bold text-primary mb-0"><i class="fas fa-history me-2"></i>Screening History</h4>
+    <div class="position-relative mt-3 mt-md-0">
+        <i class="fas fa-search position-absolute top-50 start-0 translate-middle-y ms-3 text-secondary"></i>
+        <input type="text" id="searchInput" class="search-input" placeholder="Search by date or doctor...">
+    </div>
+</div>
+
+<!-- Grid -->
+<div class="row g-4 animate-fade-in delay-300" id="recordsGrid">
+    {% for r in patient_records %}
+    <div class="col-md-6 col-lg-4 record-item"
+        data-search="{{ r.timestamp }} {{ r.doctor.username if r.doctor else '' }} {{ r.prediction }}">
+        <div class="card h-100 record-card">
+            <!-- Image -->
+            <div class="image-container">
+                {% if r.image_path %}
+                <img src="{{ url_for('static', filename='uploads/' + (r.image_path.split(',')[0] | basename)) }}"
+                    alt="Screening">
+                {% else %}
+                <div class="d-flex align-items-center justify-content-center h-100 w-100 bg-light">
+                    <i class="fas fa-image fa-3x text-muted opacity-25"></i>
+                </div>
+                {% endif %}
+
+                <span
+                    class="status-badge {% if 'Risk' in r.prediction and 'Low' not in r.prediction %}risk-high{% else %}risk-low{% endif %}">
+                    {{ r.prediction }}
+                </span>
+
+                <div class="position-absolute bottom-0 start-0 w-100 p-3"
+                    style="background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);">
+                    <div class="text-white">
+                        <i class="far fa-calendar-alt me-2"></i>
+                        {{ r.timestamp.split('_')[0][:4] }}-{{ r.timestamp.split('_')[0][4:6] }}-{{
+                        r.timestamp.split('_')[0][6:] }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Body -->
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="d-flex align-items-center">
+                        <div
+                            class="rounded-circle p-1 me-2 {% if r.confidence|float > 80 and 'High' in r.prediction %}bg-danger{% else %}bg-primary{% endif %} bg-opacity-10">
+                            <i
+                                class="fas fa-chart-pie {% if r.confidence|float > 80 and 'High' in r.prediction %}text-danger{% else %}text-primary{% endif %}"></i>
+                        </div>
+                        <div>
+                            <small class="text-secondary d-block"
+                                style="font-size: 0.7rem; font-weight: 700;">ACCURACY</small>
+                            <span class="fw-bold text-dark">{{ r.confidence }}%</span>
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        <small class="text-secondary d-block"
+                            style="font-size: 0.7rem; font-weight: 700;">DOCTOR</small>
+                        <span class="fw-bold text-dark">
+                            {% if r.doctor %}Dr. {{ r.doctor.username }}{% else %}<span
+                                class="text-muted fst-italic">Pending</span>{% endif %}
+                        </span>
+                    </div>
+                </div>
+
+                <hr class="opacity-10 my-3">
+
+                <div class="row g-2">
+                    <div class="col-6">
+                        <a href="{{ url_for('view_report', timestamp=r.timestamp) }}" target="_blank"
+                            class="btn btn-custom-outline w-100 btn-sm">
+                            <i class="fas fa-file-pdf me-1"></i> Report
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="{{ url_for('chat', timestamp=r.timestamp) }}"
+                            class="btn btn-custom-primary w-100 btn-sm position-relative">
+                            <i class="fas fa-comments me-1"></i> Chat
+                            {% if r.doctor_replies_list and r.doctor_replies_list|length > 0 %}
+                            <span
+                                class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle">
+                                <span class="visually-hidden">New alerts</span>
+                            </span>
+                            {% endif %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- JS Hook Data -->
+            <span class="d-none data-prediction">{{ r.prediction }}</span>
+            <span class="d-none data-replies">{{ 'true' if r.doctor_replies_list and r.doctor_replies_list|length >
+                0 else 'false' }}</span>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% else %}
+<!-- Empty State -->
+<div class="text-center py-5 animate-fade-in mt-5 bg-white rounded-4 shadow-sm p-5 border border-light">
+    <div class="mb-4">
+        <span class="fa-stack fa-3x">
+            <i class="fas fa-circle fa-stack-2x text-primary opacity-10"></i>
+            <i class="fas fa-notes-medical fa-stack-1x text-primary"></i>
+        </span>
+    </div>
+    <h2 class="fw-bold text-dark mb-3">No Screenings Record Found</h2>
+    <p class="text-secondary mb-4 fs-5 mx-auto" style="max-width: 500px;">
+        Start your first AI-assisted checkup today using our standard form or by talking to our new virtual AI Doctor.
+    </p>
+
+    <div class="d-flex flex-column gap-3 max-w-sm mx-auto" style="max-width: 350px; margin: 0 auto;">
+        <a href="{{ url_for('start_screening') }}" class="btn btn-primary btn-lg rounded-pill shadow-sm">
+            <i class="fas fa-file-medical me-2"></i>Screen by Form
+        </a>
+
+        <div class="d-flex align-items-center option-divider my-2">
+            <hr class="flex-grow-1 text-secondary">
+            <span class="px-3 text-muted small fw-bold">OR</span>
+            <hr class="flex-grow-1 text-secondary">
+        </div>
+
+        <a href="{{ url_for('avatar_screening') }}"
+            class="btn bg-dark text-info btn-lg border border-info rounded-pill shadow-lg position-relative overflow-hidden group"
+            style="transition: all 0.3s;">
+            <i class="fas fa-microphone-alt me-2"></i>Consult AI Doctor
+            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                style="font-size: 0.6rem;">
+                NEW
+            </span>
+        </a>
+    </div>
+</div>
+{% endif %}
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Search
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            searchInput.addEventListener('keyup', function (e) {
+                const term = e.target.value.toLowerCase();
+                const items = document.querySelectorAll('.record-item');
+                items.forEach(item => {
+                    const text = item.getAttribute('data-search').toLowerCase();
+                    item.style.display = text.includes(term) ? 'block' : 'none';
+                });
+            });
+        }
+
+        // Stats Logic
+        const records = document.querySelectorAll('.record-item');
+        let highRisk = 0;
+        let replies = 0;
+
+        records.forEach(r => {
+            const pred = r.querySelector('.data-prediction')?.textContent || '';
+            const reply = r.querySelector('.data-replies')?.textContent;
+
+            if (pred.includes('Risk') && !pred.includes('Low')) highRisk++;
+            if (reply === 'true') replies++;
+        });
+
+        if (document.getElementById('highRiskCount')) document.getElementById('highRiskCount').textContent = highRisk;
+        if (document.getElementById('doctorRepliesCount')) document.getElementById('doctorRepliesCount').textContent = replies;
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,420 @@
+{% extends "base.html" %}
+{% block title %}Doctor Dashboard{% endblock %}
+
+{% block content %}
+<style>
+  body {
+    background-color: var(--bg-main);
+    color: var(--text-main);
+  }
+
+  .dashboard-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem;
+  }
+
+  /* Stats Cards */
+  .stat-card {
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    padding: 1.75rem;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition);
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--primary-color);
+  }
+
+  .stat-icon {
+    width: 54px;
+    height: 54px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    margin-bottom: 1.25rem;
+    background: var(--primary-light);
+    color: var(--primary-color);
+  }
+
+  /* Table Styling */
+  .table-card {
+    background: var(--surface);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+  }
+
+  .table thead th {
+    background-color: #f8fafc;
+    color: var(--text-muted);
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    letter-spacing: 0.05em;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .table tbody td {
+    padding: 1.25rem 1.5rem;
+    vertical-align: middle;
+    color: var(--text-main);
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 0.95rem;
+  }
+
+  .table tbody tr:hover {
+    background-color: #f8fafc;
+  }
+
+  /* Avatar & Thumbnails */
+  .avatar-circle {
+    width: 42px;
+    height: 42px;
+    background: var(--primary-gradient);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 1rem;
+    box-shadow: 0 4px 10px rgba(67, 97, 238, 0.2);
+  }
+
+  .img-thumb {
+    width: 52px;
+    height: 52px;
+    object-fit: cover;
+    border-radius: 10px;
+    transition: var(--transition);
+    border: 2px solid white;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .img-thumb:hover {
+    transform: scale(1.4) rotate(2deg);
+    box-shadow: var(--shadow-lg);
+    z-index: 10;
+  }
+
+  /* Badges */
+  .badge-soft {
+    padding: 0.5rem 1rem;
+    border-radius: 50px;
+    font-weight: 700;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .badge-soft-danger {
+    background-color: #fef2f2;
+    color: var(--danger);
+  }
+
+  .badge-soft-success {
+    background-color: #ecfdf5;
+    color: var(--success);
+  }
+
+  .badge-soft-warning {
+    background-color: #fffbeb;
+    color: var(--warning);
+  }
+
+  .badge-soft-primary {
+    background-color: var(--primary-light);
+    color: var(--primary-color);
+  }
+
+  /* Search Input */
+  .search-control {
+    border-radius: 50px;
+    padding: 0.85rem 1.5rem;
+    border: 1.5px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+    width: 360px;
+    max-width: 100%;
+    transition: var(--transition);
+  }
+
+  .search-control:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 4px var(--primary-light);
+    outline: none;
+  }
+
+  /* Animations */
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .fade-in {
+    animation: fadeInUp 0.5s ease-out forwards;
+  }
+
+  .delay-1 {
+    animation-delay: 0.1s;
+    opacity: 0;
+  }
+
+  .delay-2 {
+    animation-delay: 0.2s;
+    opacity: 0;
+  }
+</style>
+
+<div class="dashboard-container">
+  <!-- Header -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 mb-md-5 fade-in px-responsive">
+    <div class="mb-3 mb-md-0">
+      <h1 class="fw-black mb-1">Doctor Dashboard</h1>
+      <p class="text-muted mb-0">Overview of patient screenings and reports</p>
+    </div>
+    <div class="d-flex flex-wrap gap-2 gap-md-3 align-items-center justify-content-end">
+      <a href="{{ url_for('appointments') }}" class="btn bg-white text-primary fw-bold shadow-sm rounded-pill px-4">
+        <i class="fas fa-calendar-check me-2"></i>Schedule
+      </a>
+      <div class="d-flex align-items-center bg-white p-2 rounded-pill shadow-sm border px-3">
+        <span class="text-muted small me-2 d-none d-sm-inline"><strong>Dr. {{ current_user.username }}</strong></span>
+        <div class="avatar-circle" style="width: 32px; height: 32px; font-size: 0.8rem;">Dr.</div>
+      </div>
+    </div>
+  </div>
+
+  {% if records %}
+  <!-- Stats Row -->
+  <div class="row g-3 g-md-4 mb-5 fade-in delay-1 px-responsive">
+    <div class="col-12 col-md-4">
+      <div class="stat-card">
+        <div class="stat-icon bg-primary bg-opacity-10 text-primary">
+          <i class="fas fa-users"></i>
+        </div>
+        <h2 class="fw-bold mb-0">{{ records|length }}</h2>
+        <div class="text-muted small text-uppercase fw-bold">Assigned Patients</div>
+      </div>
+    </div>
+    <div class="col-12 col-md-4">
+      <div class="stat-card">
+        <div class="stat-icon bg-danger bg-opacity-10 text-danger">
+          <i class="fas fa-heartbeat"></i>
+        </div>
+        <!-- Logic to count high risk would be better in backend, simplified here via JS or Jinja -->
+        {% set high_risk = namespace(value=0) %}
+        {% for r in records %}
+        {% if 'Risk' in r.prediction and 'Low' not in r.prediction %}
+        {% set high_risk.value = high_risk.value + 1 %}
+        {% endif %}
+        {% endfor %}
+        <h2 class="fw-black mb-0 text-danger">{{ high_risk.value }}</h2>
+        <div class="text-muted small text-uppercase fw-bold">High Risk Cases</div>
+      </div>
+    </div>
+    <div class="col-12 col-md-4">
+      <div class="stat-card">
+        <div class="stat-icon bg-warning bg-opacity-10 text-warning">
+          <i class="fas fa-flag"></i>
+        </div>
+        {% set flagged = namespace(value=0) %}
+        {% for r in records %}
+        {% if r.status == 'Flagged' or r.follow_up %}
+        {% set flagged.value = flagged.value + 1 %}
+        {% endif %}
+        {% endfor %}
+        <h2 class="fw-bold mb-0 text-warning">{{ flagged.value }}</h2>
+        <div class="text-muted small text-uppercase fw-bold">Flagged / Follow-up</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 fade-in delay-2 px-responsive g-3">
+    <h5 class="fw-black mb-0 text-primary">Patient Records</h5>
+    <div class="position-relative flex-fill flex-md-grow-0" style="max-width: 360px;">
+      <i class="fas fa-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+      <input type="text" id="adminSearch" class="form-control search-control ps-5 w-100"
+        placeholder="Search patients, prediction...">
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="card table-card fade-in delay-2">
+    <div class="table-responsive">
+      <table class="table mb-0">
+        <thead>
+          <tr>
+            <th>Date & Time</th>
+            <th>Patient</th>
+            <th>Prediction</th>
+            <th>Score</th>
+            <th>Status</th>
+            <th>Image</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="recordsTableBody">
+          {% for r in records %}
+          <tr class="record-row" data-search="{{ r.username }} {{ r.prediction }} {{ r.status }} {{ r.timestamp }}">
+            <td data-label="Date & Time">
+              <div class="fw-bold text-dark">{{ r.timestamp.split('_')[0] }}</div>
+              <div class="small text-muted">{{ r.timestamp.split('_')[1].replace('-', ':') }}</div>
+            </td>
+            <td data-label="Patient">
+              <div class="d-flex align-items-center">
+                <div class="avatar-circle fs-6 me-3 d-none d-sm-flex"
+                  style="width: 32px; height: 32px; background: #e2e8f0; color: #64748b;">
+                  {{ r.username[0] | upper }}
+                </div>
+                <div>
+                  <div class="fw-bold">{{ r.username }}</div>
+                  <div class="small text-muted">ID: #{{ r.id }}</div>
+                </div>
+              </div>
+            </td>
+            <td data-label="Prediction">
+              {% if 'Risk' in r.prediction and 'Low' not in r.prediction %}
+              <span class="badge-soft badge-soft-danger"><i class="fas fa-exclamation-triangle me-1"></i>High
+                Risk</span>
+              {% else %}
+              <span class="badge-soft badge-soft-success"><i class="fas fa-check-circle me-1"></i>Low Risk</span>
+              {% endif %}
+            </td>
+            <td data-label="Score">
+              <div class="d-flex align-items-center w-100 justify-content-end justify-content-lg-start">
+                <div class="progress flex-grow-1 me-2 d-none d-lg-flex"
+                  style="height: 6px; width: 60px; background-color: #f1f5f9;">
+                  <div
+                    class="progress-bar {% if r.confidence|float > 80 and 'High' in r.prediction %}bg-danger{% else %}bg-primary{% endif %}"
+                    role="progressbar" data-width="{{ r.confidence }}"></div>
+                </div>
+                <span class="small fw-bold">{{ r.confidence }}%</span>
+              </div>
+            </td>
+            <td data-label="Status">
+              {% if r.status == 'Flagged' or r.follow_up %}
+              <span class="badge-soft badge-soft-warning">Flagged</span>
+              {% elif r.status == 'Replied' %}
+              <span class="badge-soft badge-soft-primary">Replied</span>
+              {% else %}
+              <span class="badge-soft bg-light text-muted">Pending</span>
+              {% endif %}
+            </td>
+            <td data-label="Image">
+              {% if r.image_path %}
+              <a href="{{ url_for('static', filename='uploads/' + r.image_path.split(',')[0] | basename) }}"
+                target="_blank">
+                <img src="{{ url_for('static', filename='uploads/' + r.image_path.split(',')[0] | basename) }}"
+                  class="img-thumb" alt="Scan">
+              </a>
+              {% else %}
+              <span class="text-muted small">No Img</span>
+              {% endif %}
+            </td>
+            <td data-label="Actions">
+              <div class="dropdown">
+                <button class="btn btn-light btn-sm rounded-circle shadow-sm" type="button" data-bs-toggle="dropdown">
+                  <i class="fas fa-ellipsis-v text-muted"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end border-0 shadow-lg rounded-3">
+                  <li>
+                    <h6 class="dropdown-header text-uppercase small ls-1">Actions</h6>
+                  </li>
+                  <li>
+                    <a class="dropdown-item" href="{{ url_for('view_report', timestamp=r.timestamp) }}" target="_blank">
+                      <i class="fas fa-file-pdf me-2 text-primary"></i>View Report
+                    </a>
+                  </li>
+                  <li>
+                    <a class="dropdown-item" href="{{ url_for('chat_doctor', timestamp=r.timestamp) }}">
+                      <i class="fas fa-comments me-2 text-info"></i>Open Chat
+                    </a>
+                  </li>
+                  <li>
+                    <hr class="dropdown-divider">
+                  </li>
+                  <li>
+                    <form action="{{ url_for( ('unflag_follow_up' if r.follow_up else 'flag_follow_up') ) }}"
+                      method="post" class="d-inline">
+                      <input type="hidden" name="timestamp" value="{{ r.timestamp }}">
+                      <button class="dropdown-item">
+                        <i class="fas fa-flag me-2 text-warning"></i>{{ 'Unflag Case' if r.follow_up else 'Flag for
+                        Follow-up' }}
+                      </button>
+                    </form>
+                  </li>
+                  <li>
+                    <form action="{{ url_for('delete_record') }}" method="post"
+                      onsubmit="return confirm('Are you sure? This cannot be undone.');">
+                      <input type="hidden" name="timestamp" value="{{ r.timestamp }}">
+                      <button class="dropdown-item text-danger">
+                        <i class="fas fa-trash-alt me-2"></i>Delete Record
+                      </button>
+                    </form>
+                  </li>
+                </ul>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {% else %}
+  <!-- Empty State -->
+  <div class="text-center py-5 fade-in">
+    <div class="bg-white p-5 rounded-circle shadow-sm d-inline-block mb-4"
+      style="width: 140px; height: 140px; display: flex; align-items: center; justify-content: center;">
+      <i class="fas fa-folder-open fa-3x text-muted opacity-25"></i>
+    </div>
+    <h3 class="fw-bold mb-2">No Records Found</h3>
+    <p class="text-muted">You don't have any assigned patient screenings yet.</p>
+  </div>
+  {% endif %}
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    // Search Filter
+    const searchInput = document.getElementById('adminSearch');
+    if (searchInput) {
+      searchInput.addEventListener('keyup', function (e) {
+        const term = e.target.value.toLowerCase();
+        const rows = document.querySelectorAll('.record-row');
+
+        rows.forEach(row => {
+          const text = row.getAttribute('data-search').toLowerCase();
+          row.style.display = text.includes(term) ? '' : 'none';
+        });
+      });
+    }
+    // Animate Progress Bars
+    const progressBars = document.querySelectorAll('.progress-bar[data-width]');
+    progressBars.forEach(bar => {
+      const width = bar.getAttribute('data-width');
+      bar.style.width = width + '%';
+    });
+  });
+</script>
+{% endblock %}
